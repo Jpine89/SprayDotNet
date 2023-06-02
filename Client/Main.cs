@@ -5,6 +5,7 @@ using static CitizenFX.Core.Native.API;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Client.Util;
 
 namespace Client
 {
@@ -73,6 +74,11 @@ namespace Client
 
         private async void InfoCommand(string userInput)
         {
+            Spray spray = new Spray();
+            spray.Text = userInput;
+            spray.Color = "#FA1C09";
+            spray.Font = "$Font2";
+
             var ped = PlayerPedId();
             var cords = GetEntityCoords(ped, true);
             var test = GetGameplayCamCoords();
@@ -87,10 +93,10 @@ namespace Client
                 await Delay(0);
             }
 
-            string SprayUserData = $"<FONT color='#FA1C09' FACE='$Font2'> {userInput} ";
+            string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
 
             //Debug.WriteLine("Setting up sprady");
-            Vector3 spradyData = new Vector3(16, 30, 73);
+            Vector3 spradyData = new Vector3(16, 25, 73);
             Vector3 currentComputedRotation = new Vector3(0, 0, 0);
             Debug.WriteLine(userInput);
             Debug.WriteLine(SprayUserData);
@@ -145,7 +151,7 @@ namespace Client
             RequestStreamedTextureDict("dpscenes", true);
 
             //var t = FindRaycastedSprayCoords();
-
+            Vector3 spradyData = new Vector3(16, 25, 73);
 
 
             while (_disposed)
@@ -153,16 +159,16 @@ namespace Client
                 await Delay(0);
                 SetTextColour(255, 0, 0, 0);
 
-                BeginTextCommandWidth("THREESTRINGS");
-                EndTextCommandGetWidth(1);
+                //BeginTextCommandWidth("THREESTRINGS");
+                //EndTextCommandGetWidth(1);
 
-                BeginTextCommandDisplayText("THREESTRINGS");
-                AddTextComponentString("TEST");
-                EndTextCommandDisplayText((float)0.50, (float)0.50);
+                //BeginTextCommandDisplayText("THREESTRINGS");
+                //AddTextComponentString("TEST");
+                //EndTextCommandDisplayText((float)0.50, (float)0.50);
+                //EndTextCommandDisplayHelp();
 
-
-                DrawSprite("dpscenes", "Diamond", (float)0.50, (float)0.50, 10, 10, 0, 255, 255, 255, 150);
-                SetTextEntry("STRING");
+                DrawSprite("dpscenes", "Diamond", (float)0.50, (float)0.50, spradyData.X, spradyData.Y, spradyData.Z, 255, 255, 255, 150);
+                //SetTextEntry("STRING");
                 //AddTextComponentString("This is a test");
                 //DrawText((float)0.50, (float)0.50);
             }
