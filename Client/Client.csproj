@@ -51,6 +51,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Stream\dpscenes.ytd" />
+    <None Include="Stream\Fonts\Graffiti\BeatStreet.gfx" />
+    <None Include="Stream\Fonts\Graffiti\DirtyLizard.gfx" />
+    <None Include="Stream\Fonts\Graffiti\Maren.gfx" />
+    <None Include="Stream\Fonts\Handwritten\ALittleSunshine.gfx" />
+    <None Include="Stream\Fonts\Handwritten\Inkfree.gfx" />
+    <None Include="Stream\Fonts\Handwritten\Kid.gfx" />
+    <None Include="Stream\Fonts\Handwritten\PaperDaisy.gfx" />
+    <None Include="Stream\Fonts\Handwritten\Strawberry.gfx" />
+    <None Include="Stream\Fonts\Handwritten\WriteMeASong.gfx" />
+    <None Include="Stream\Fonts\Misc\Christmas.gfx" />
+    <None Include="Stream\Fonts\Misc\Easter.gfx" />
+    <None Include="Stream\Fonts\Misc\Halloween.gfx" />
+    <None Include="Stream\Fonts\Misc\HappyDay.gfx" />
+    <None Include="Stream\Fonts\Misc\ImpactLabel.gfx" />
+    <None Include="Stream\Fonts\Normal\ArialNarrow.gfx" />
+    <None Include="Stream\Fonts\Normal\Lato.gfx" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
