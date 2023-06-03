@@ -152,7 +152,7 @@ namespace Client
 
             //var t = FindRaycastedSprayCoords();
             Vector3 spradyData = new Vector3(16, 25, 73);
-            //RegisterFontFile();
+            RegisterFontFile();
 
             while (_disposed)
             {
