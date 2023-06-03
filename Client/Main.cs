@@ -148,11 +148,11 @@ namespace Client
 
             //var teest4 = CreateRuntimeTxd("test");
 
-            RequestStreamedTextureDict("dpscenes", true);
+            RequestStreamedTextureDict("commonmenu", true);
 
             //var t = FindRaycastedSprayCoords();
             Vector3 spradyData = new Vector3(16, 25, 73);
-
+            //RegisterFontFile();
 
             while (_disposed)
             {
@@ -166,8 +166,7 @@ namespace Client
                 //AddTextComponentString("TEST");
                 //EndTextCommandDisplayText((float)0.50, (float)0.50);
                 //EndTextCommandDisplayHelp();
-
-                DrawSprite("dpscenes", "Diamond", (float)0.50, (float)0.50, spradyData.X, spradyData.Y, spradyData.Z, 255, 255, 255, 150);
+                DrawSprite("commonmenu", "shop_box_cross", (float)0.10, (float)0.10, (float)0.50, (float)0.50, 0, 255, 255, 255, 150);
                 //SetTextEntry("STRING");
                 //AddTextComponentString("This is a test");
                 //DrawText((float)0.50, (float)0.50);
