@@ -1,11 +1,8 @@
-﻿using CitizenFX.Core;
-using CitizenFX.Core.UI;
-using CitizenFX.Core.NaturalMotion;
-using static CitizenFX.Core.Native.API;
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using System.Collections.Generic;
 using Client.Util;
+using CitizenFX.Core;
+using static CitizenFX.Core.Native.API;
 
 namespace Client
 {
@@ -14,6 +11,7 @@ namespace Client
         private bool _disposed = false;
         public Main()
         {
+            SetupFonts();
             EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
 
             RegisterCommand("info", new Action<int, List<object>, string>((source, args, raw) =>
@@ -36,6 +34,59 @@ namespace Client
             RegisterCommand("test", new Action<string>(TestCommand), false);
             RegisterCommand("exit", new Action(EndTest), false);
             //RegisterCommand("info", new Action<string>(InfoCommand), false);
+
+
+            RegisterCommand("Decal", new Action(DecalCommand), false);
+        }
+
+        private async void SetupFonts()
+        {
+            Debug.WriteLine("Inside Font Setup");
+        }
+
+        private async void DecalCommand()
+        {
+            Vector3 spradyData = new Vector3(16, 25, 73);
+            float uni = 0;
+            Debug.WriteLine("Decal Called");
+            //int decalType, float posX, float posY, float posZ,
+            //float p4, float p5, float p6,
+            //float p7, float p8, float p9,
+            //float width, float height,
+            //float rCoef, float gCoef, float bCoef,
+            //float opacity, float timeout, bool p17, bool p18, bool p19
+
+            RequestStreamedTextureDict("commonmenu", false);
+            int i  = AddDecal(1110, 16, 25, 73,
+                1f, 1f, 1f,//dir X/Y/Z
+                0, 0, 0,
+                2f, 4f, //width height
+                1.0f, 1.0f, 1.0f, //RGB
+                1.0f, -1f, //opac and time
+                true, false, false); //Last bool is Car?
+            Debug.WriteLine(i.ToString());
+
+            while (true)
+            {
+                await Delay(0);
+                PatchDecalDiffuseMap(1110, "commonmenu", "shop_box_cross");
+            }
+
+            //PatchDecalDiffuseMap(1110, "commonmenu", "shop_box_cross");
+            Debug.WriteLine(IsDecalAlive(i).ToString());
+
+            Debug.WriteLine(GetEntityCoords(i, IsDecalAlive(i)).ToString());
+
+            //AddDecal(
+            //    decalType,
+            //    targetedCoord.x, targetedCoord.y, targetedCoord.z, --pos
+            //    0.0, 0.0, -1.0, --unk
+            //    func_522(0.0, 1.0, 0.0), --unk
+            //    1.0, 1.0, --width, height
+            //    0.196, 0.0, 0.0, --rgb
+            //    1.0, -1.0, --opacity, timeout
+            //    0, 0, 0-- unk
+            //}
         }
 
         private void RemoveSpray()
@@ -79,6 +130,11 @@ namespace Client
             spray.Color = "#FA1C09";
             spray.Font = "$Font2";
 
+            string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
+
+            Vector3 spradyData = new Vector3(16, 20, 73);
+            Vector3 currentComputedRotation = new Vector3(0, 0, 0);
+
             var ped = PlayerPedId();
             var cords = GetEntityCoords(ped, true);
             var test = GetGameplayCamCoords();
@@ -93,48 +149,26 @@ namespace Client
                 await Delay(0);
             }
 
-            string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
-
-            //Debug.WriteLine("Setting up sprady");
-            Vector3 spradyData = new Vector3(16, 25, 73);
-            Vector3 currentComputedRotation = new Vector3(0, 0, 0);
-            Debug.WriteLine(userInput);
-            Debug.WriteLine(SprayUserData);
-
-            //Debug.WriteLine("Setting up this PushScale thing..");
             PushScaleformMovieFunction(scaleForm, "SHOW_SHARD_WASTED_MP_MESSAGE");
-            //Debug.WriteLine("Setting up this PushScale thing..");
-            PushScaleformMovieFunctionParameterString(SprayUserData);
+            PushScaleformMovieFunctionParameterString("test");
             PushScaleformMovieFunctionParameterString("Small Text");
             PushScaleformMovieFunctionParameterInt(5);
-
             PopScaleformMovieFunctionVoid();
-
-
             while (true)
             {
                 await Delay(0);
-
-
-                //DrawScaleformMovieFullscreen(scaleForm, 255, 255, 255, 255, 0);
-
-                //Debug.WriteLine("About to Draw..");
-                DrawScaleformMovie_3dNonAdditive(
-                                                1,
-                                                spradyData.X, spradyData.Y, spradyData.Z,
-                                                currentComputedRotation.X, currentComputedRotation.Y, currentComputedRotation.Z,
-                                                (float)1.0,
-                                                (float)1.0,
-                                                (float)1.0,
-                                                (float)2.0, (float)2.0,
-                                                (float)1.0,
-                                                2
+                DrawScaleformMovie_3dSolid(
+                                            scaleForm,
+                                            16f, 25f, 73f,
+                                            0f, 0f, 0f,
+                                            (float)1.0,
+                                            (float)1.0,
+                                            (float)1.0,
+                                            (float)2.0, (float)2.0,
+                                            (float)1.0,
+                                            2
                                             );
             }
-            //var direction = RotationToDirection(cameraRotation);
-
-            //var t = StartShapeTestRay();
-
         }
 
         private async void TestCommand(string testString)
@@ -152,7 +186,14 @@ namespace Client
 
             //var t = FindRaycastedSprayCoords();
             Vector3 spradyData = new Vector3(16, 25, 73);
-            RegisterFontFile();
+
+            //PrivateFontCollection collection = new PrivateFontCollection();
+            //collection.AddFontFile(@"C:\Projects\MyProj\free3of9.ttf");
+            //FontFamily fontFamily = new FontFamily("Free 3 of 9", collection);
+            //Font font = new Font(fontFamily, height);
+
+
+            //RegisterFontFile();
 
             while (_disposed)
             {
