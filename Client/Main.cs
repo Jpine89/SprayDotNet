@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Client.Util;
 using CitizenFX.Core;
 using static CitizenFX.Core.Native.API;
+using Client.Functions;
 
 namespace Client
 {
@@ -11,7 +12,7 @@ namespace Client
         private bool _disposed = false;
         public Main()
         {
-            SetupFonts();
+            
             EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
 
             RegisterCommand("info", new Action<int, List<object>, string>((source, args, raw) =>
@@ -28,6 +29,7 @@ namespace Client
                 //});
             }), false);
 
+            RegisterCommand("dui", new Action(CreateDui), false);
 
             RegisterCommand("remove", new Action(RemoveSpray), false);
 
@@ -35,19 +37,18 @@ namespace Client
             RegisterCommand("exit", new Action(EndTest), false);
             //RegisterCommand("info", new Action<string>(InfoCommand), false);
 
-
             RegisterCommand("Decal", new Action(DecalCommand), false);
         }
 
-        private async void SetupFonts()
+        private void CreateDui()
         {
-            Debug.WriteLine("Inside Font Setup");
+
         }
 
         private async void DecalCommand()
         {
             Vector3 spradyData = new Vector3(16, 25, 73);
-            float uni = 0;
+            //float uni = 0;
             Debug.WriteLine("Decal Called");
             //int decalType, float posX, float posY, float posZ,
             //float p4, float p5, float p6,
@@ -65,17 +66,20 @@ namespace Client
                 1.0f, -1f, //opac and time
                 true, false, false); //Last bool is Car?
             Debug.WriteLine(i.ToString());
+            PatchDecalDiffuseMap(1110, "commonmenu", "shop_box_cross");
+            Debug.WriteLine(IsDecalAlive(i).ToString());
 
             while (true)
             {
                 await Delay(0);
                 PatchDecalDiffuseMap(1110, "commonmenu", "shop_box_cross");
+                Debug.WriteLine(IsDecalAlive(i).ToString());
+
+                Debug.WriteLine(GetEntityCoords(i, IsDecalAlive(i)).ToString());
             }
 
             //PatchDecalDiffuseMap(1110, "commonmenu", "shop_box_cross");
-            Debug.WriteLine(IsDecalAlive(i).ToString());
 
-            Debug.WriteLine(GetEntityCoords(i, IsDecalAlive(i)).ToString());
 
             //AddDecal(
             //    decalType,
@@ -125,12 +129,14 @@ namespace Client
 
         private async void InfoCommand(string userInput)
         {
+            //Font_Function testSpray = new Font_Function();
             Spray spray = new Spray();
             spray.Text = userInput;
             spray.Color = "#FA1C09";
-            spray.Font = "$Font2";
+            //spray.Font = "$" + testSpray.FontsList[13];
 
-            string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
+            //string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
+            string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
             Vector3 spradyData = new Vector3(16, 20, 73);
             Vector3 currentComputedRotation = new Vector3(0, 0, 0);
@@ -150,7 +156,7 @@ namespace Client
             }
 
             PushScaleformMovieFunction(scaleForm, "SHOW_SHARD_WASTED_MP_MESSAGE");
-            PushScaleformMovieFunctionParameterString("test");
+            PushScaleformMovieFunctionParameterString(SprayUserData);
             PushScaleformMovieFunctionParameterString("Small Text");
             PushScaleformMovieFunctionParameterInt(5);
             PopScaleformMovieFunctionVoid();
