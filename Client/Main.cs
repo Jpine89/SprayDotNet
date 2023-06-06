@@ -40,18 +40,15 @@ namespace Client
 
             RegisterCommand("Decal", new Action(DecalCommand), false);
 
-            RegisterCommand("RayTrace", new Action(RayCastGamePlayCamera), false);
+            //RegisterCommand("RayTrace", new Action(RayCastGamePlayCamera), false);
         }
 
-        private async void RayCastGamePlayCamera()
+        private static void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
             
             float distance = 10f;
-            //var cameraRotation = GetGameplayCamRot(GetPlayerPed(-1)); //if ped not working try 0
             var cameraRotation = GetGameplayCamRot(0); //if ped not working try 0
-            Debug.WriteLine("Rot: " + cameraRotation.ToString());
             var cameraCoord = GetGameplayCamCoord();
-            Debug.WriteLine("Coord: " + cameraCoord.ToString());
             var dir = RotationToDirection(cameraRotation);
 
             Vector3 Des = new Vector3()
@@ -61,60 +58,38 @@ namespace Client
                 Z = cameraCoord.Z + dir.Z * distance
             };
 
-            Debug.WriteLine("Des: " + Des.ToString());
-
-            //float retz = cameraRotation.Z * 0.0174532924F;
-            //float retx = cameraRotation.X * 0.0174532924F;
-            //float absx = (float)Math.Abs(Math.Cos(retx));
-            //Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1, (float)Math.Cos(retz) * absx,
-            //                                   (float)Math.Sin(retx));
-            //Vector3 camstuffProjected = camStuff * distance;
-
-            //Debug.WriteLine("CamStuff: " + camstuffProjected);
-            //int count = 0;
-            //while (count < 10)
-            //{
-            await Delay(0);
             var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, Des.X, Des.Y, Des.Z, -1, PlayerPedId(), 0);
-            //StartShapeTestLosProbe
-            //int target = 100;
+
             int entityHandleArg = 0;
             bool hitSomethingArg = false;
             Vector3 hitPositionArg = new Vector3(); //EndCoords
-            Vector3 surfaceNormalArg = new Vector3();
             Vector3 surfaceNormalArg2 = new Vector3();
 
             uint materialArg = 0;
-
-            //int result = GetShapeTestResult(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg, ref entityHandleArg);
             int testee = GetShapeTestResultEx(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg2, ref materialArg, ref entityHandleArg);
 
             if (testee == 2)
             {
-                Debug.WriteLine(hitSomethingArg.ToString());
-                Debug.WriteLine(hitPositionArg.ToString());
-                Debug.WriteLine("Surface Normal by result: " + surfaceNormalArg.ToString());
-
-                var test = GetEntityType(entityHandleArg);
-                //HitEntity = Entity.FromHandle(entityHandleArg);
-                Debug.WriteLine(entityHandleArg.ToString());
-                Debug.WriteLine(test.ToString());
-                Debug.WriteLine(((MaterialHash)materialArg).ToString());
-
-
-                Debug.WriteLine("Surface Normal by Testee: " + surfaceNormalArg2);
-                Vector3 testing = new Vector3();
-                testing = hitPositionArg + surfaceNormalArg2;
-                Debug.WriteLine("SprayCoords before mod: " + testing);
-                testing.X *= 0.035f;
-                testing.Y *= 0.035f;
-                testing.Z *= 0.035f;
-                Debug.WriteLine("SprayCoords: " + testing);
+                endPoint = hitPositionArg;
+                rotation = surfaceNormalArg2;
+                Debug.WriteLine("hitsomething: " + hitSomethingArg.ToString());
+                Debug.WriteLine("Hitsomething coords: " + hitPositionArg.ToString());
+                Debug.WriteLine("surface: " + surfaceNormalArg2.ToString());
             }
         }
 
-        private Vector3 RotationToDirection(Vector3 rotation)
+        private static Vector3 RotationToDirection(Vector3 rotation)
         {
+
+
+            //float retz = cameraRotation.Z * 0.0174532924F;
+            //float retx = cameraRotation.X * 0.0174532924F;
+            //float absx = (float)Math.Abs(Math.Cos(retx));
+            //Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1,
+            //                              (float)Math.Cos(retz) * absx,
+            //                                   (float)Math.Sin(retx));
+
+
             Vector3 New = new Vector3()
             {
                 X = (float)((Math.PI / 180) * rotation.X),
@@ -223,29 +198,15 @@ namespace Client
 
         private async void InfoCommand(string userInput)
         {
-            //Font_Function testSpray = new Font_Function();
             Spray spray = new Spray();
             spray.Text = userInput;
             spray.Color = "#FA1C09";
-            //spray.Font = "$" + testSpray.FontsList[13];
-
-            //string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
 
-            Vector3 spradyData = new Vector3(-2081.53f, 2612.887f, 3.325f);
-            //Vector3 spradyData = new Vector3(141.3974f, 1171.249f, 228.2703f);
-            Vector3 rotationData = new Vector3(0, 102 , 0);
-
-            Vector3 currentComputedRotation = new Vector3(0, 0, 0);
-
-            var ped = PlayerPedId();
-            var cords = GetEntityCoords(ped, true);
-            var test = GetGameplayCamCoords();
-            Debug.WriteLine(test.ToString());
-
-            var cameraRotation = GetGameplayCamRot(2);
-            var cameraCoord = GetGameplayCamCoord();
+            Vector3 spradyData = new Vector3();
+            Vector3 rotationData = new Vector3();
+            RayCastGamePlayCamera(ref spradyData, ref rotationData);
 
             var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
             while (!HasScaleformMovieLoaded(scaleForm))
@@ -266,6 +227,7 @@ namespace Client
                                             scaleForm,
                                             spradyData.X, spradyData.Y, spradyData.Z, //16f, 25f, 73f,
                                             rotationData.X, rotationData.Y, rotationData.Z,
+                                            //0,0,0,
                                             (float)1.0, (float)1.0, (float)1.0, //unk values
                                             (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
                                             2 //always 2?
