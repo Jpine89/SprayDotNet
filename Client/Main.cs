@@ -10,6 +10,7 @@ namespace Client
     class Main : BaseScript
     {
         private bool _disposed = false;
+        public static Entity HitEntity { get; set; }
         public Main()
         {
             
@@ -38,6 +39,63 @@ namespace Client
             //RegisterCommand("info", new Action<string>(InfoCommand), false);
 
             RegisterCommand("Decal", new Action(DecalCommand), false);
+
+            RegisterCommand("RayTrace", new Action(RayCastGamePlayCamera), false);
+        }
+
+        private async void RayCastGamePlayCamera()
+        {
+            
+            float distance = 10f;
+            //var cameraRotation = GetGameplayCamRot(GetPlayerPed(-1)); //if ped not working try 0
+            var cameraRotation = GetGameplayCamRot(0); //if ped not working try 0
+            Debug.WriteLine("Rot: " + cameraRotation.ToString());
+            var cameraCoord = GetGameplayCamCoord();
+            Debug.WriteLine("Coord: " + cameraCoord.ToString());
+
+            float retz = cameraRotation.Z * 0.0174532924F;
+            float retx = cameraRotation.X * 0.0174532924F;
+            float absx = (float)Math.Abs(Math.Cos(retx));
+            Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1, (float)Math.Cos(retz) * absx,
+                                               (float)Math.Sin(retx));
+            Vector3 camstuffProjected = camStuff * distance;
+
+            Debug.WriteLine("CamStuff: " + camstuffProjected);
+            //int count = 0;
+            //while (count < 10)
+            //{
+                await Delay(0);
+                var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, camstuffProjected.X, camstuffProjected.Y, camstuffProjected.Z, -1, PlayerPedId(), 0);
+                //StartShapeTestLosProbe
+                //int target = 100;
+                int entityHandleArg = 0;
+                bool hitSomethingArg = false;
+                Vector3 hitPositionArg = new Vector3();
+                Vector3 surfaceNormalArg = new Vector3();
+
+                uint materialArg = 0;
+
+                int result = GetShapeTestResult(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg, ref entityHandleArg);
+
+
+                if (result == 2)
+                {
+                    Debug.WriteLine(hitSomethingArg.ToString());
+                    Debug.WriteLine(hitPositionArg.ToString());
+                    Debug.WriteLine(surfaceNormalArg.ToString());
+
+                    var test = GetEntityType(entityHandleArg);
+                    //HitEntity = Entity.FromHandle(entityHandleArg);
+                    Debug.WriteLine(test.ToString());
+                    Debug.WriteLine(((MaterialHash)materialArg).ToString());
+                }
+
+            //DrawMarker();
+        }
+
+        private Vector3 RotationToDirection(Vector3 rotation)
+        {
+            return rotation;
         }
 
         private void CreateDui()
@@ -138,7 +196,7 @@ namespace Client
             //string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
-            Vector3 spradyData = new Vector3(16, 20, 73);
+            Vector3 spradyData = new Vector3(141.3313f, 1172.67f, 228.6097f);
             Vector3 currentComputedRotation = new Vector3(0, 0, 0);
 
             var ped = PlayerPedId();
@@ -165,7 +223,7 @@ namespace Client
                 await Delay(0);
                 DrawScaleformMovie_3dSolid(
                                             scaleForm,
-                                            16f, 25f, 73f,
+                                            spradyData.X, spradyData.Y, spradyData.Z, //16f, 25f, 73f,
                                             0f, 0f, 0f,
                                             (float)1.0,
                                             (float)1.0,
