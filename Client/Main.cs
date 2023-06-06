@@ -52,50 +52,86 @@ namespace Client
             Debug.WriteLine("Rot: " + cameraRotation.ToString());
             var cameraCoord = GetGameplayCamCoord();
             Debug.WriteLine("Coord: " + cameraCoord.ToString());
+            var dir = RotationToDirection(cameraRotation);
 
-            float retz = cameraRotation.Z * 0.0174532924F;
-            float retx = cameraRotation.X * 0.0174532924F;
-            float absx = (float)Math.Abs(Math.Cos(retx));
-            Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1, (float)Math.Cos(retz) * absx,
-                                               (float)Math.Sin(retx));
-            Vector3 camstuffProjected = camStuff * distance;
+            Vector3 Des = new Vector3()
+            {
+                X = cameraCoord.X + dir.X * distance,
+                Y = cameraCoord.Y + dir.Y * distance,
+                Z = cameraCoord.Z + dir.Z * distance
+            };
 
-            Debug.WriteLine("CamStuff: " + camstuffProjected);
+            Debug.WriteLine("Des: " + Des.ToString());
+
+            //float retz = cameraRotation.Z * 0.0174532924F;
+            //float retx = cameraRotation.X * 0.0174532924F;
+            //float absx = (float)Math.Abs(Math.Cos(retx));
+            //Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1, (float)Math.Cos(retz) * absx,
+            //                                   (float)Math.Sin(retx));
+            //Vector3 camstuffProjected = camStuff * distance;
+
+            //Debug.WriteLine("CamStuff: " + camstuffProjected);
             //int count = 0;
             //while (count < 10)
             //{
-                await Delay(0);
-                var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, camstuffProjected.X, camstuffProjected.Y, camstuffProjected.Z, -1, PlayerPedId(), 0);
-                //StartShapeTestLosProbe
-                //int target = 100;
-                int entityHandleArg = 0;
-                bool hitSomethingArg = false;
-                Vector3 hitPositionArg = new Vector3();
-                Vector3 surfaceNormalArg = new Vector3();
+            await Delay(0);
+            var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, Des.X, Des.Y, Des.Z, -1, PlayerPedId(), 0);
+            //StartShapeTestLosProbe
+            //int target = 100;
+            int entityHandleArg = 0;
+            bool hitSomethingArg = false;
+            Vector3 hitPositionArg = new Vector3(); //EndCoords
+            Vector3 surfaceNormalArg = new Vector3();
+            Vector3 surfaceNormalArg2 = new Vector3();
 
-                uint materialArg = 0;
+            uint materialArg = 0;
 
-                int result = GetShapeTestResult(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg, ref entityHandleArg);
+            //int result = GetShapeTestResult(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg, ref entityHandleArg);
+            int testee = GetShapeTestResultEx(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg2, ref materialArg, ref entityHandleArg);
+
+            if (testee == 2)
+            {
+                Debug.WriteLine(hitSomethingArg.ToString());
+                Debug.WriteLine(hitPositionArg.ToString());
+                Debug.WriteLine("Surface Normal by result: " + surfaceNormalArg.ToString());
+
+                var test = GetEntityType(entityHandleArg);
+                //HitEntity = Entity.FromHandle(entityHandleArg);
+                Debug.WriteLine(entityHandleArg.ToString());
+                Debug.WriteLine(test.ToString());
+                Debug.WriteLine(((MaterialHash)materialArg).ToString());
 
 
-                if (result == 2)
-                {
-                    Debug.WriteLine(hitSomethingArg.ToString());
-                    Debug.WriteLine(hitPositionArg.ToString());
-                    Debug.WriteLine(surfaceNormalArg.ToString());
-
-                    var test = GetEntityType(entityHandleArg);
-                    //HitEntity = Entity.FromHandle(entityHandleArg);
-                    Debug.WriteLine(test.ToString());
-                    Debug.WriteLine(((MaterialHash)materialArg).ToString());
-                }
-
-            //DrawMarker();
+                Debug.WriteLine("Surface Normal by Testee: " + surfaceNormalArg2);
+                Vector3 testing = new Vector3();
+                testing = hitPositionArg + surfaceNormalArg2;
+                Debug.WriteLine("SprayCoords before mod: " + testing);
+                testing.X *= 0.035f;
+                testing.Y *= 0.035f;
+                testing.Z *= 0.035f;
+                Debug.WriteLine("SprayCoords: " + testing);
+            }
         }
 
         private Vector3 RotationToDirection(Vector3 rotation)
         {
-            return rotation;
+            Vector3 New = new Vector3()
+            {
+                X = (float)((Math.PI / 180) * rotation.X),
+                Y = (float)((Math.PI / 180) * rotation.Y),
+                Z = (float)((Math.PI / 180) * rotation.Z)
+            };
+
+            Debug.WriteLine("New Rotation: " + New.ToString());
+
+            var Dir = new Vector3()
+            {
+                X = (float)(-Math.Sin(New.Z) * Math.Abs(Math.Cos(New.X))),
+                Y = (float)(Math.Cos(New.Z) * Math.Abs(Math.Cos(New.X))),
+                Z = (float)Math.Sin(New.X)
+            };
+
+            return Dir;
         }
 
         private void CreateDui()
@@ -196,7 +232,11 @@ namespace Client
             //string SprayUserData = $"<FONT color='{spray.Color}' FACE='{spray.Font}'> {spray.Text} ";
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
-            Vector3 spradyData = new Vector3(141.3313f, 1172.67f, 228.6097f);
+
+            Vector3 spradyData = new Vector3(-2081.53f, 2612.887f, 3.325f);
+            //Vector3 spradyData = new Vector3(141.3974f, 1171.249f, 228.2703f);
+            Vector3 rotationData = new Vector3(0, 102 , 0);
+
             Vector3 currentComputedRotation = new Vector3(0, 0, 0);
 
             var ped = PlayerPedId();
@@ -221,16 +261,14 @@ namespace Client
             while (true)
             {
                 await Delay(0);
+
                 DrawScaleformMovie_3dSolid(
                                             scaleForm,
                                             spradyData.X, spradyData.Y, spradyData.Z, //16f, 25f, 73f,
-                                            0f, 0f, 0f,
-                                            (float)1.0,
-                                            (float)1.0,
-                                            (float)1.0,
-                                            (float)2.0, (float)2.0,
-                                            (float)1.0,
-                                            2
+                                            rotationData.X, rotationData.Y, rotationData.Z,
+                                            (float)1.0, (float)1.0, (float)1.0, //unk values
+                                            (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
+                                            2 //always 2?
                                             );
             }
         }
