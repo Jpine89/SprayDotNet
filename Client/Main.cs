@@ -31,16 +31,10 @@ namespace Client
             }), false);
 
             RegisterCommand("dui", new Action(CreateDui), false);
-
             RegisterCommand("remove", new Action(RemoveSpray), false);
-
             RegisterCommand("test", new Action<string>(TestCommand), false);
             RegisterCommand("exit", new Action(EndTest), false);
-            //RegisterCommand("info", new Action<string>(InfoCommand), false);
-
             RegisterCommand("Decal", new Action(DecalCommand), false);
-
-            //RegisterCommand("RayTrace", new Action(RayCastGamePlayCamera), false);
         }
 
         private static void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
@@ -80,30 +74,16 @@ namespace Client
 
         private static Vector3 RotationToDirection(Vector3 rotation)
         {
-
-
-            //float retz = cameraRotation.Z * 0.0174532924F;
-            //float retx = cameraRotation.X * 0.0174532924F;
-            //float absx = (float)Math.Abs(Math.Cos(retx));
-            //Vector3 camStuff = new Vector3((float)Math.Sin(retz) * absx * -1,
-            //                              (float)Math.Cos(retz) * absx,
-            //                                   (float)Math.Sin(retx));
-
-
-            Vector3 New = new Vector3()
-            {
-                X = (float)((Math.PI / 180) * rotation.X),
-                Y = (float)((Math.PI / 180) * rotation.Y),
-                Z = (float)((Math.PI / 180) * rotation.Z)
-            };
-
-            Debug.WriteLine("New Rotation: " + New.ToString());
+            float pi = (float)Math.PI / 180f;
+            float retZ = rotation.Z * pi;
+            float retX = rotation.X * pi;
+            float absX = Math.Abs((float)Math.Cos(retX));
 
             var Dir = new Vector3()
             {
-                X = (float)(-Math.Sin(New.Z) * Math.Abs(Math.Cos(New.X))),
-                Y = (float)(Math.Cos(New.Z) * Math.Abs(Math.Cos(New.X))),
-                Z = (float)Math.Sin(New.X)
+                X = ((float)(Math.Sin(retZ)) * absX) * -1,
+                Y = ((float)(Math.Cos(retZ)) * absX),
+                Z = (float)Math.Sin(retX)
             };
 
             return Dir;
