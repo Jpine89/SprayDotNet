@@ -72,9 +72,6 @@ namespace Client
             {
                 endPoint = hitPositionArg;
                 rotation = surfaceNormalArg2;
-                Debug.WriteLine("hitsomething: " + hitSomethingArg.ToString());
-                Debug.WriteLine("Hitsomething coords: " + hitPositionArg.ToString());
-                Debug.WriteLine("surface: " + surfaceNormalArg2.ToString());
             }
         }
         private static Vector3 RotationToDirection(Vector3 rotation)
@@ -94,47 +91,46 @@ namespace Client
             return Dir;
         }
 
-        private async Task RunCameraMethod(Vector3 Location, Vector3 Rotation)
+        private async Task RunCameraMethod(Vector3 WantedLocation, Vector3 WantedRotation)
         {
             if (DoesCamExist(rotCam))
                 DestroyCam(rotCam, false);
 
             rotCam = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
             Vector3 currentSprayRotation = new Vector3();
-            bool keepAlive = true;
-            while (keepAlive)
+            int reCheck = 30;
+            while (true)
             {
                 await Delay(0);
 
-                if(Location != null && Rotation != null)
+                if(WantedLocation != null && WantedRotation != null)
                 {
+                    if (reCheck >= 0)
+                        reCheck--;
 
-                    if (currentSprayRotation != Location)
+                    if (currentSprayRotation != WantedRotation || reCheck < 0)
                     {
+                        reCheck = 30;
+                        Debug.WriteLine("Im inside?");
                         var wantedSprayRotationFixed = new Vector3()
                         {
-                            X = Rotation.X,
-                            Y = Rotation.Y,
-                            Z = Rotation.Z + 0.03f
+                            X = WantedRotation.X,
+                            Y = WantedRotation.Y,
+                            Z = WantedRotation.Z + 0.03f
                         };
 
-                        Debug.WriteLine("Location: " + Location.ToString() + "  normal:  " + wantedSprayRotationFixed.ToString());
-                        var camLookPosition = Location - Rotation * 10;
-
-                        Debug.WriteLine("CamLookPositon: " + camLookPosition.ToString());
-
-                        SetCamCoord(rotCam, wantedSprayRotationFixed.X, wantedSprayRotationFixed.Y, wantedSprayRotationFixed.Z);
+                        var camLookPosition = WantedLocation - wantedSprayRotationFixed * 10;
+                        SetCamCoord(rotCam, WantedLocation.X, WantedLocation.Y, WantedLocation.Z);
                         PointCamAtCoord(rotCam, camLookPosition.X, camLookPosition.Y, camLookPosition.Z);
                         SetCamActive(rotCam, true);
                         await Delay(2);
                         var rot = GetCamRot(rotCam, 2);
                         SetCamActive(rotCam, false);
 
-                        Debug.WriteLine("Debug pre: " + rot.ToString());
 
-                        currentSprayRotation = Rotation;
+                        currentSprayRotation = WantedRotation;
                         FinalRotation = rot;
-                        keepAlive = false;
+                        break;
                     }
                 }
             }
@@ -238,9 +234,9 @@ namespace Client
             Vector3 LocationData = new Vector3();
             Vector3 rotationData = new Vector3();
             RayCastGamePlayCamera(ref LocationData, ref rotationData);
-            Debug.WriteLine("Before FinalRotation: " + FinalRotation);
-
             await RunCameraMethod(LocationData, rotationData);
+            Debug.WriteLine("LocationData: " + LocationData);
+            Debug.WriteLine("RotationData: " + rotationData);
             Debug.WriteLine("After FinalRotation: " + FinalRotation);
 
             var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
@@ -260,11 +256,11 @@ namespace Client
             while (true)
             {
                 await Delay(0);
-              
+
                 DrawScaleformMovie_3dSolid(
                                             scaleForm,
                                             LocationData.X, LocationData.Y, LocationData.Z, //16f, 25f, 73f,
-                                            0, 0, zRot,
+                                            FinalRotation.X, FinalRotation.Y, FinalRotation.Z,
                                             //0,0,0,
                                             (float)1.0, (float)1.0, (float)1.0, //unk values
                                             (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
