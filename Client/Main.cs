@@ -4,6 +4,7 @@ using Client.Util;
 using CitizenFX.Core;
 using static CitizenFX.Core.Native.API;
 using Client.Functions;
+using System.Threading.Tasks;
 
 namespace Client
 {
@@ -11,6 +12,9 @@ namespace Client
     {
         private bool _disposed = false;
         public static Entity HitEntity { get; set; }
+        public Vector3 FinalRotation { get; set; }
+
+        int rotCam;
         public Main()
         {
             
@@ -37,6 +41,8 @@ namespace Client
             RegisterCommand("Decal", new Action(DecalCommand), false);
         }
 
+
+
         private static void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
             
@@ -46,13 +52,13 @@ namespace Client
             var dir = RotationToDirection(cameraRotation);
 
             Vector3 Des = new Vector3()
-            {
+            {   
                 X = cameraCoord.X + dir.X * distance,
                 Y = cameraCoord.Y + dir.Y * distance,
                 Z = cameraCoord.Z + dir.Z * distance
             };
 
-            var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, Des.X, Des.Y, Des.Z, -1, PlayerPedId(), 0);
+            var Ray = StartShapeTestRay(cameraCoord.X, cameraCoord.Y, cameraCoord.Z, Des.X, Des.Y, Des.Z, -1, PlayerPedId(), 1);
 
             int entityHandleArg = 0;
             bool hitSomethingArg = false;
@@ -60,9 +66,9 @@ namespace Client
             Vector3 surfaceNormalArg2 = new Vector3();
 
             uint materialArg = 0;
-            int testee = GetShapeTestResultEx(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg2, ref materialArg, ref entityHandleArg);
+            int result = GetShapeTestResultEx(Ray, ref hitSomethingArg, ref hitPositionArg, ref surfaceNormalArg2, ref materialArg, ref entityHandleArg);
 
-            if (testee == 2)
+            if (result == 2)
             {
                 endPoint = hitPositionArg;
                 rotation = surfaceNormalArg2;
@@ -71,7 +77,6 @@ namespace Client
                 Debug.WriteLine("surface: " + surfaceNormalArg2.ToString());
             }
         }
-
         private static Vector3 RotationToDirection(Vector3 rotation)
         {
             float pi = (float)Math.PI / 180f;
@@ -87,6 +92,52 @@ namespace Client
             };
 
             return Dir;
+        }
+
+        private async Task RunCameraMethod(Vector3 Location, Vector3 Rotation)
+        {
+            if (DoesCamExist(rotCam))
+                DestroyCam(rotCam, false);
+
+            rotCam = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
+            Vector3 currentSprayRotation = new Vector3();
+            bool keepAlive = true;
+            while (keepAlive)
+            {
+                await Delay(0);
+
+                if(Location != null && Rotation != null)
+                {
+
+                    if (currentSprayRotation != Location)
+                    {
+                        var wantedSprayRotationFixed = new Vector3()
+                        {
+                            X = Rotation.X,
+                            Y = Rotation.Y,
+                            Z = Rotation.Z + 0.03f
+                        };
+
+                        Debug.WriteLine("Location: " + Location.ToString() + "  normal:  " + wantedSprayRotationFixed.ToString());
+                        var camLookPosition = Location - Rotation * 10;
+
+                        Debug.WriteLine("CamLookPositon: " + camLookPosition.ToString());
+
+                        SetCamCoord(rotCam, wantedSprayRotationFixed.X, wantedSprayRotationFixed.Y, wantedSprayRotationFixed.Z);
+                        PointCamAtCoord(rotCam, camLookPosition.X, camLookPosition.Y, camLookPosition.Z);
+                        SetCamActive(rotCam, true);
+                        await Delay(2);
+                        var rot = GetCamRot(rotCam, 2);
+                        SetCamActive(rotCam, false);
+
+                        Debug.WriteLine("Debug pre: " + rot.ToString());
+
+                        currentSprayRotation = Rotation;
+                        FinalRotation = rot;
+                        keepAlive = false;
+                    }
+                }
+            }
         }
 
         private void CreateDui()
@@ -183,10 +234,14 @@ namespace Client
             spray.Color = "#FA1C09";
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
-
-            Vector3 spradyData = new Vector3();
+            Vector3 currentComputedRotation = new Vector3() { };
+            Vector3 LocationData = new Vector3();
             Vector3 rotationData = new Vector3();
-            RayCastGamePlayCamera(ref spradyData, ref rotationData);
+            RayCastGamePlayCamera(ref LocationData, ref rotationData);
+            Debug.WriteLine("Before FinalRotation: " + FinalRotation);
+
+            await RunCameraMethod(LocationData, rotationData);
+            Debug.WriteLine("After FinalRotation: " + FinalRotation);
 
             var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
             while (!HasScaleformMovieLoaded(scaleForm))
@@ -199,14 +254,17 @@ namespace Client
             PushScaleformMovieFunctionParameterString("Small Text");
             PushScaleformMovieFunctionParameterInt(5);
             PopScaleformMovieFunctionVoid();
+
+            float zRot = GetEntityHeading(GetPlayerPed(-1)) + 35f;
+
             while (true)
             {
                 await Delay(0);
-
+              
                 DrawScaleformMovie_3dSolid(
                                             scaleForm,
-                                            spradyData.X, spradyData.Y, spradyData.Z, //16f, 25f, 73f,
-                                            rotationData.X, rotationData.Y, rotationData.Z,
+                                            LocationData.X, LocationData.Y, LocationData.Z, //16f, 25f, 73f,
+                                            0, 0, zRot,
                                             //0,0,0,
                                             (float)1.0, (float)1.0, (float)1.0, //unk values
                                             (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
