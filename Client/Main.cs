@@ -225,6 +225,7 @@ namespace Client
 
         private async void InfoCommand(string userInput)
         {
+            float forward_offset = 0.015f;
             Spray spray = new Spray();
             spray.Text = userInput;
             spray.Color = "#FA1C09";
@@ -233,8 +234,13 @@ namespace Client
             Vector3 currentComputedRotation = new Vector3() { };
             Vector3 LocationData = new Vector3();
             Vector3 rotationData = new Vector3();
+
             RayCastGamePlayCamera(ref LocationData, ref rotationData);
             await RunCameraMethod(LocationData, rotationData);
+            Debug.WriteLine("LocationData: " + LocationData);
+            //Debug.WriteLine("RotationData: " + rotationData * forward_offset);
+            LocationData = LocationData + (rotationData * forward_offset);
+
             Debug.WriteLine("LocationData: " + LocationData);
             Debug.WriteLine("RotationData: " + rotationData);
             Debug.WriteLine("After FinalRotation: " + FinalRotation);

@@ -30,6 +30,7 @@ namespace Client.Functions
             //string test = System.IO.Path.GetDirectoryName("~/BeatStreet.gfx");
             //Debug.WriteLine(test);
             SetupFonts();
+            
 
             RegisterCommand("Fonts", new Action(TestFonts), false);
 
@@ -61,7 +62,8 @@ namespace Client.Functions
             {
                 //var test = "C:\\Users\\Fubarp\\source\\repos\\SprayDotNet\\Client\\Stream\\Fonts" + font.FontCategory + "\\" + font.FontName;
                 //Debug.WriteLine(test);
-                RegisterFontFile(font.FontCategory + "/" + font.FontName);
+                //RegisterFontFile(font.FontCategory + "/" + font.FontName);
+                RegisterFontFile(font.FontName);
                 var fontId = RegisterFontId(font.FontId);
                 //Debug.WriteLine(fontId.ToString());
                 FontsList.Add(new Fonts(font.FontId, fontId, font.FontCategory));
