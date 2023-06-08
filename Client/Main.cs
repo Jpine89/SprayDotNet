@@ -13,19 +13,29 @@ namespace Client
         private bool _disposed = false;
         public static Entity HitEntity { get; set; }
         public Vector3 FinalRotation { get; set; }
+        public List<Spray> SPRAYS = new List<Spray>();
+        public string sprayText = "";
+        public bool isSpray = false;
+        private const float FORWARD_OFFSET = 0.015f;
 
         int rotCam;
         public Main()
         {
             
             EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
+            SPRAYS.Clear();
+            Tick += Sprays;
+            //Tick += RunCamereaMethod;
 
-            RegisterCommand("info", new Action<int, List<object>, string>((source, args, raw) =>
+            RegisterCommand("PSpray", new Action<int, List<object>, string>((source, args, raw) =>
             {
                 string compiled = "";
                 foreach (string item in args)
                     compiled = compiled + " " + item;
-                InfoCommand(compiled);
+
+                sprayText = compiled;
+                isSpray = true;
+                //InfoCommand(compiled);
                 // TODO: make a vehicle! fun!
                 //TriggerEvent("chat:addMessage", new
                 //{
@@ -41,7 +51,38 @@ namespace Client
             RegisterCommand("Decal", new Action(DecalCommand), false);
         }
 
+        private async Task Sprays()
+        {
+            foreach (var spray in SPRAYS)
+            {
+                DrawSpray(spray);
+            }
 
+            if (isSpray)
+            {
+                Vector3 LocationData = new Vector3();
+                Vector3 rotationData = new Vector3();
+                RayCastGamePlayCamera(ref LocationData, ref rotationData);
+                await RunCameraMethod(LocationData, rotationData);
+                LocationData += (rotationData * FORWARD_OFFSET);
+
+                Spray newSpray = new Spray()
+                {
+                    Text = sprayText,
+                    Font = "Beat Street",
+                    Color = "#FA1C09",
+                    LocationCoords = LocationData,
+                    RotationCoords = rotationData
+                };
+
+                DrawSpray(newSpray);
+            }
+        }
+
+        private void CreateSpray()
+        {
+
+        }
 
         private static void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
@@ -111,7 +152,6 @@ namespace Client
                     if (currentSprayRotation != WantedRotation || reCheck < 0)
                     {
                         reCheck = 30;
-                        Debug.WriteLine("Im inside?");
                         var wantedSprayRotationFixed = new Vector3()
                         {
                             X = WantedRotation.X,
@@ -223,27 +263,9 @@ namespace Client
             }), false);
         }
 
-        private async void InfoCommand(string userInput)
+        private async void DrawSpray(Spray spray)
         {
-            float forward_offset = 0.015f;
-            Spray spray = new Spray();
-            spray.Text = userInput;
-            spray.Color = "#FA1C09";
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
-
-            Vector3 currentComputedRotation = new Vector3() { };
-            Vector3 LocationData = new Vector3();
-            Vector3 rotationData = new Vector3();
-
-            RayCastGamePlayCamera(ref LocationData, ref rotationData);
-            await RunCameraMethod(LocationData, rotationData);
-            Debug.WriteLine("LocationData: " + LocationData);
-            //Debug.WriteLine("RotationData: " + rotationData * forward_offset);
-            LocationData = LocationData + (rotationData * forward_offset);
-
-            Debug.WriteLine("LocationData: " + LocationData);
-            Debug.WriteLine("RotationData: " + rotationData);
-            Debug.WriteLine("After FinalRotation: " + FinalRotation);
 
             var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
             while (!HasScaleformMovieLoaded(scaleForm))
@@ -257,22 +279,18 @@ namespace Client
             PushScaleformMovieFunctionParameterInt(5);
             PopScaleformMovieFunctionVoid();
 
-            float zRot = GetEntityHeading(GetPlayerPed(-1)) + 35f;
+            await Delay(0);
 
-            while (true)
-            {
-                await Delay(0);
-
-                DrawScaleformMovie_3dSolid(
-                                            scaleForm,
-                                            LocationData.X, LocationData.Y, LocationData.Z, //16f, 25f, 73f,
-                                            FinalRotation.X, FinalRotation.Y, FinalRotation.Z,
-                                            //0,0,0,
-                                            (float)1.0, (float)1.0, (float)1.0, //unk values
-                                            (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
-                                            2 //always 2?
-                                            );
-            }
+            DrawScaleformMovie_3dSolid
+                (
+                    scaleForm,
+                    spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z, //16f, 25f, 73f,
+                    FinalRotation.X, FinalRotation.Y, FinalRotation.Z,
+                    //0,0,0,
+                    (float)1.0, (float)1.0, (float)1.0, //unk values
+                    (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
+                    2 //always 2?
+                );
         }
 
         private async void TestCommand(string testString)
