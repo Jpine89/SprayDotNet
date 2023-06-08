@@ -13,19 +13,25 @@ namespace Client
         private bool _disposed = false;
         public static Entity HitEntity { get; set; }
         public Vector3 FinalRotation { get; set; }
-        public List<Spray> SPRAYS = new List<Spray>();
+        private List<Spray> SPRAYS = new List<Spray>();
         public string sprayText = "";
         public bool isSpray = false;
         private const float FORWARD_OFFSET = 0.015f;
+        private Spray newSpray = new Spray();
+        private const int SCAFLEFORM_MIN = 1;
+        private const int SCAFLEFORM_MAX = 12;
+        private Dictionary<int, int> ScaleFormList = new Dictionary<int, int>();
 
         int rotCam;
         public Main()
         {
-            
             EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
             SPRAYS.Clear();
+            Tick += LoadScaleForms;
             Tick += Sprays;
-            //Tick += RunCamereaMethod;
+
+            RegisterKeyMapping("+SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
+            RegisterCommand("+SaveSpray", new Action(SaveSpray), false);
 
             RegisterCommand("PSpray", new Action<int, List<object>, string>((source, args, raw) =>
             {
@@ -51,11 +57,59 @@ namespace Client
             RegisterCommand("Decal", new Action(DecalCommand), false);
         }
 
+        private void SaveSpray()
+        {
+            if (isSpray)
+            {
+                isSpray = false;
+                SPRAYS.Add(newSpray);
+                newSpray = new Spray();
+            }
+
+        }
+        private async Task LoadScaleForms()
+        {
+            for (int i = SCAFLEFORM_MIN; i <= SCAFLEFORM_MAX; i++)
+            {
+                string EndValue = i.ToString();
+                if (i < 10)
+                    EndValue = "0" + EndValue;
+
+                //Debug.WriteLine("I'm Outside");
+                //Check if Scaleform is loaded
+                //Debug.WriteLine("Outside Key:" + i);
+                if (HasScaleformMovieLoaded(RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue)))
+                { //If Not Loaded, Check if List Key is open.
+                    //Debug.WriteLine("Key:" + i);
+                    if (!ScaleFormList.ContainsKey(i))
+                    {// If Open, insert
+                        //Debug.WriteLine("I'm Open");
+                        ScaleFormList.Add(i, RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue));
+                    }
+                    else
+                    {//If key is used, just replace
+                        //Debug.WriteLine("I'm Closed");
+                        ScaleFormList[i] = RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue);
+                    } 
+                }
+            }
+
+            //Debug.WriteLine(ScaleFormList.Count.ToString());
+            //Debug.WriteLine(ScaleFormList.Count.ToString());
+            await Delay(10000);
+        }
+
         private async Task Sprays()
         {
+            int counter = SCAFLEFORM_MIN;
             foreach (var spray in SPRAYS)
             {
-                DrawSpray(spray);
+                //Debug.WriteLine(SPRAYS.Count.ToString());
+                //Debug.WriteLine(counter.ToString());
+                DrawSpray(ScaleFormList[counter], spray);
+                counter++;
+                if (counter >= SCAFLEFORM_MAX)
+                    break;
             }
 
             if (isSpray)
@@ -66,16 +120,18 @@ namespace Client
                 await RunCameraMethod(LocationData, rotationData);
                 LocationData += (rotationData * FORWARD_OFFSET);
 
-                Spray newSpray = new Spray()
+                Spray TempSpray = new Spray()
                 {
                     Text = sprayText,
                     Font = "Beat Street",
                     Color = "#FA1C09",
                     LocationCoords = LocationData,
-                    RotationCoords = rotationData
+                    RotationCoords = FinalRotation
                 };
 
-                DrawSpray(newSpray);
+                newSpray = TempSpray;
+                //Debug.WriteLine(ScaleFormList.ContainsKey(SCAFLEFORM_MAX).ToString());
+                DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
             }
         }
 
@@ -263,29 +319,35 @@ namespace Client
             }), false);
         }
 
-        private async void DrawSpray(Spray spray)
+        private async void DrawSpray(int scaleFormHandle, Spray spray)
         {
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
 
-            var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
-            while (!HasScaleformMovieLoaded(scaleForm))
-            {
-                await Delay(0);
-            }
+            //Debug.WriteLine("ScaleForm: " + scaleFormHandle);
+            //Debug.WriteLine("HasFormLoaded: " + HasScaleformMovieLoaded(scaleFormHandle));
 
-            PushScaleformMovieFunction(scaleForm, "SHOW_SHARD_WASTED_MP_MESSAGE");
+            //rewrite this into it's own tick, may help with performance
+            //plus it's a while loop inside a tic..
+            //var scaleForm = RequestScaleformMovie("mp_big_message_freemode");
+            //while (!HasScaleformMovieLoaded(scaleForm))
+            //{
+            //    await Delay(0);
+            //}
+
+            //PushScaleformMovieFunction(scaleFormHandle, "SHOW_SHARD_WASTED_MP_MESSAGE");
+            PushScaleformMovieFunction(scaleFormHandle, "SET_PLAYER_NAME");
             PushScaleformMovieFunctionParameterString(SprayUserData);
             PushScaleformMovieFunctionParameterString("Small Text");
             PushScaleformMovieFunctionParameterInt(5);
             PopScaleformMovieFunctionVoid();
 
-            await Delay(0);
+            //await Delay(0);
 
             DrawScaleformMovie_3dSolid
                 (
-                    scaleForm,
+                    scaleFormHandle,
                     spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z, //16f, 25f, 73f,
-                    FinalRotation.X, FinalRotation.Y, FinalRotation.Z,
+                    spray.RotationCoords.X, spray.RotationCoords.Y, spray.RotationCoords.Z,
                     //0,0,0,
                     (float)1.0, (float)1.0, (float)1.0, //unk values
                     (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
