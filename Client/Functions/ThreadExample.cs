@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Client.Functions
 {
@@ -16,6 +17,13 @@ namespace Client.Functions
         public ThreadExample()
         {
             TMC = Exports["core"].getCoreObject();
+
+            //RegisterNuiCallback("close", new Action<IDictionary<string, object>, CallbackDelegate>(async (body, result) =>
+            //{
+            //    Debug.WriteLine("Testing Close Callback");
+            //    result(new { ok = true });
+            //}));
+
             //RegisterScript(this);
             //UnregisterScript(this);
             //Interval 1000;
@@ -24,10 +32,88 @@ namespace Client.Functions
             //RegisterCommand("thread", new Action(TestThreads), false);
         }
 
+        [Command("oldspawn")]
+        private void testspawn()
+        {
+            Debug.WriteLine("Inside Old Spawn");
+            Exports["spawnmanager"].spawnPlayer(new
+            {
+                x = 0,
+                y = 0,
+                z = 0,
+                model = "s_m_y_cop_01"
+            });
+        }
+
         [Command("DoIt")]
         private void test()
         {
             Debug.WriteLine("Do it");
+
+            Dictionary<string, object> data = new Dictionary<string, object>();
+            Elements elm = new Elements()
+            {
+                type = "text",
+                name = "text",
+                label = "Text",
+                value = "tester",
+                multiline = true
+            };
+            Elements confirmbtn = new Elements() { 
+                type = "button",
+                name = "button_test",
+                label = "Button Test",
+                icon = "fad fa-heartbeat",
+                disabled = false
+            };
+
+            //List<Elements> elements = new List<Elements>();
+            Elements[] elements = { elm, confirmbtn };
+            //elements.Add(elm);
+            data.Add("string", "test");
+            data.Add("string2", "test2");
+
+            
+            string json = JsonConvert.SerializeObject(elements);
+            //Debug.WriteLine(json);
+            //Debug.WriteLine(elements[0].Name);
+
+            Dictionary<string, object> setting = new() {
+                {"namespace", "testing_namespace" },
+                {"test", "openMenu" },
+                {"title", "Edit text" },
+                {"subtitle", "If you have a speciifc" },
+                {"form", true }
+            };
+
+            string settings =
+                @"{
+                    namespace = 'testing_namespace',
+                    type = 'openMenu'
+                    title = 'Edit text',
+                    subtitle = 'If you have a specific',
+                    form = true }
+                ";
+            //SetNuiFocus(true, true);
+            //Debug.WriteLine("SetNuiFocus");
+            TMC.Functions.OpenMenu(setting, elements, new Action<dynamic, bool>(close), new Action(something), new Action<dynamic>(testFunc));
+        }
+        private void close(dynamic change, bool confirm)
+        {
+            string test = JsonConvert.SerializeObject(change);
+            Debug.WriteLine("test close");
+            Debug.WriteLine(test);
+            Debug.WriteLine($"{confirm}");
+        }
+        private void something()
+        {
+            Debug.WriteLine("test Something");
+        }
+        private void testFunc(dynamic change)
+        {
+            string test = JsonConvert.SerializeObject(change);
+            Debug.WriteLine("test func");
+            Debug.WriteLine(test);
         }
 
         private async Task ThreadExample_Tick()
@@ -49,5 +135,18 @@ namespace Client.Functions
                 Tick -= ThreadExample_Tick;
             }
         }
+    }
+
+    public class Elements{
+        public string type { get; set; }
+        public string name { get; set; }
+        public string label { get; set; }
+        public string value { get; set; }
+        public bool multiline { get; set; }
+        public bool form { get; set; }
+        public string cat { get; set; }
+        public string icon { get; set; }
+        public bool disabled { get; set; }
+        
     }
 }
