@@ -48,9 +48,6 @@ namespace Client.Functions
         [Command("DoIt")]
         private void test()
         {
-            Debug.WriteLine("Do it");
-
-            Dictionary<string, object> data = new Dictionary<string, object>();
             Elements elm = new Elements()
             {
                 type = "text",
@@ -66,18 +63,7 @@ namespace Client.Functions
                 icon = "fad fa-heartbeat",
                 disabled = false
             };
-
-            //List<Elements> elements = new List<Elements>();
             Elements[] elements = { elm, confirmbtn };
-            //elements.Add(elm);
-            data.Add("string", "test");
-            data.Add("string2", "test2");
-
-            
-            string json = JsonConvert.SerializeObject(elements);
-            //Debug.WriteLine(json);
-            //Debug.WriteLine(elements[0].Name);
-
             Dictionary<string, object> setting = new() {
                 {"namespace", "testing_namespace" },
                 {"test", "openMenu" },
@@ -85,17 +71,6 @@ namespace Client.Functions
                 {"subtitle", "If you have a speciifc" },
                 {"form", true }
             };
-
-            string settings =
-                @"{
-                    namespace = 'testing_namespace',
-                    type = 'openMenu'
-                    title = 'Edit text',
-                    subtitle = 'If you have a specific',
-                    form = true }
-                ";
-            //SetNuiFocus(true, true);
-            //Debug.WriteLine("SetNuiFocus");
             TMC.Functions.OpenMenu(setting, elements, new Action<dynamic, bool>(close), new Action(something), new Action<dynamic>(testFunc));
         }
         private void close(dynamic change, bool confirm)
