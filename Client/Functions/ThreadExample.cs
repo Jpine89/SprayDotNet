@@ -16,7 +16,7 @@ namespace Client.Functions
 
         public ThreadExample()
         {
-            TMC = Exports["core"].getCoreObject();
+            //TMC = Exports["core"].getCoreObject();
 
             //RegisterNuiCallback("close", new Action<IDictionary<string, object>, CallbackDelegate>(async (body, result) =>
             //{

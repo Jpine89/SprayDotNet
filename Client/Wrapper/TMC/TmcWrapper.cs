@@ -4,9 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Client.Wrapper.TMC
 {
-    public class Class1
+    class TmcWrapper
     {
+        private dynamic TMC;
+        public TmcWrapper()
+        {
+
+        }
     }
 }
