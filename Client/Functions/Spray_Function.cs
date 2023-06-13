@@ -25,8 +25,79 @@ namespace Client.Functions
 
         public Spray_Function()
         {
-            RegisterKeyMapping("+SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
-            RegisterCommand("+SaveSpray", new Action(SaveSpray), false);
+            Tick += LoadScaleForms;
+            Tick += Sprays;
+
+            //Can be removed once Menu Client Calls Server to save.
+            RegisterKeyMapping("pspray:SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
+
+
+
+        }
+
+        private async Task LoadScaleForms()
+        {
+            for (int i = SCAFLEFORM_MIN; i <= SCAFLEFORM_MAX; i++)
+            {
+                string EndValue = i.ToString();
+                if (i < 10)
+                    EndValue = "0" + EndValue;
+
+                if (HasScaleformMovieLoaded(RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue)))
+                { //If Not Loaded, Check if List Key is open.
+                    if (!ScaleFormList.ContainsKey(i))
+                    {// If Open, insert
+                        ScaleFormList.Add(i, RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue));
+                    }
+                    else
+                    {//If key is used, just replace
+                        ScaleFormList[i] = RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue);
+                    }
+                }
+            }
+            await Delay(10000);
+        }
+
+        private async Task Sprays()
+        {
+            int counter = SCAFLEFORM_MIN;
+            foreach (var spray in SPRAYS)
+            {
+                //Debug.WriteLine(SPRAYS.Count.ToString());
+                //Debug.WriteLine(counter.ToString());
+                DrawSpray(ScaleFormList[counter], spray);
+                counter++;
+                if (counter >= SCAFLEFORM_MAX)
+                    break;
+            }
+
+            if (isSpray)
+            {
+                Vector3 LocationData = new Vector3();
+                Vector3 rotationData = new Vector3();
+                RayCastGamePlayCamera(ref LocationData, ref rotationData);
+                await RunCameraMethod(LocationData, rotationData);
+                LocationData += (rotationData * FORWARD_OFFSET);
+
+                newSpray = new Spray()
+                {
+                    Text = sprayText,
+                    Font = "Beat Street",
+                    Color = "#FA1C09",
+                    LocationCoords = LocationData,
+                    RotationCoords = FinalRotation
+                };
+
+                //Debug.WriteLine(ScaleFormList.ContainsKey(SCAFLEFORM_MAX).ToString());
+                DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
+            }
+        }
+
+        [Command("PSpray")]
+        public void InitializeSpray()
+        {
+            isSpray = true;
+            sprayText = "Spray Template";
         }
 
         public void DrawSpray(int scaleFormHandle, Spray spray)

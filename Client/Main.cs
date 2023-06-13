@@ -12,105 +12,34 @@ namespace Client
     {
 
         #region Variables
-        private const float FORWARD_OFFSET = 0.015f;
-        private const int SCAFLEFORM_MIN = 1;
-        private const int SCAFLEFORM_MAX = 12;
-
-        public Vector3 FinalRotation { get; set; }
-        private List<Spray> SPRAYS = new List<Spray>();
-        public string sprayText = "";
-        public bool isSpray = false;
-        private Spray newSpray = new Spray();
-        private Dictionary<int, int> ScaleFormList = new Dictionary<int, int>();
-
-        Spray_Function spray_Function = new Spray_Function();
-
-#endregion
+        #endregion
 
 
         public Main()
         {
             
             EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
-            SPRAYS.Clear();
-            Tick += LoadScaleForms;
-            Tick += Sprays;
 
-            RegisterCommand("PSpray", new Action<int, List<object>, string>((source, args, raw) =>
-            {
-                string compiled = "";
-                foreach (string item in args)
-                    compiled = compiled + " " + item;
+            //RegisterCommand("PSpray", new Action<int, List<object>, string>((source, args, raw) =>
+            //{
+            //    string compiled = "";
+            //    foreach (string item in args)
+            //        compiled = compiled + " " + item;
 
-                sprayText = compiled;
-                isSpray = true;
-                //InfoCommand(compiled);
-                // TODO: make a vehicle! fun!
-                //TriggerEvent("chat:addMessage", new
-                //{
-                //    color = new[] { 255, 0, 0 },
-                //    args = new[] { "[CarSpawner]", $"I wish I could spawn this {(args.Count > 0 ? $"{args[0]} or" : "")} adder but my owner was too lazy. :(" }
-                //});
-            }), false);
+            //    sprayText = compiled;
+            //    isSpray = true;
+            //    //InfoCommand(compiled);
+            //    // TODO: make a vehicle! fun!
+            //    //TriggerEvent("chat:addMessage", new
+            //    //{
+            //    //    color = new[] { 255, 0, 0 },
+            //    //    args = new[] { "[CarSpawner]", $"I wish I could spawn this {(args.Count > 0 ? $"{args[0]} or" : "")} adder but my owner was too lazy. :(" }
+            //    //});
+            //}), false);
+
         }
 
-        private async Task LoadScaleForms()
-        {
-            for (int i = SCAFLEFORM_MIN; i <= SCAFLEFORM_MAX; i++)
-            {
-                string EndValue = i.ToString();
-                if (i < 10)
-                    EndValue = "0" + EndValue;
 
-                if (HasScaleformMovieLoaded(RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue)))
-                { //If Not Loaded, Check if List Key is open.
-                    if (!ScaleFormList.ContainsKey(i))
-                    {// If Open, insert
-                        ScaleFormList.Add(i, RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue));
-                    }
-                    else
-                    {//If key is used, just replace
-                        ScaleFormList[i] = RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue);
-                    } 
-                }
-            }
-            await Delay(10000);
-        }
-
-        private async Task Sprays()
-        {
-            int counter = SCAFLEFORM_MIN;
-            foreach (var spray in SPRAYS)
-            {
-                //Debug.WriteLine(SPRAYS.Count.ToString());
-                //Debug.WriteLine(counter.ToString());
-                spray_Function.DrawSpray(ScaleFormList[counter], spray);
-                counter++;
-                if (counter >= SCAFLEFORM_MAX)
-                    break;
-            }
-
-            if (isSpray)
-            {
-                Vector3 LocationData = new Vector3();
-                Vector3 rotationData = new Vector3();
-                spray_Function.RayCastGamePlayCamera(ref LocationData, ref rotationData);
-                await spray_Function.RunCameraMethod(LocationData, rotationData);
-                LocationData += (rotationData * FORWARD_OFFSET);
-
-                newSpray = new Spray()
-                {
-                    Text = sprayText,
-                    Font = "Beat Street",
-                    Color = "#FA1C09",
-                    LocationCoords = LocationData,
-                    RotationCoords = FinalRotation
-                };
-
-                //Debug.WriteLine(ScaleFormList.ContainsKey(SCAFLEFORM_MAX).ToString());
-                spray_Function.DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
-            }
-        }
 
         #region Obselete Functions
 
