@@ -14,11 +14,11 @@ namespace Server
 
         }
 
-        [EventHandler("server_ping")]
+        [EventHandler("pspray:server_ping")]
         private void test()
         {
             Debug.WriteLine("I'm inside the server?");
-            TriggerClientEvent("client_pong");
+            TriggerClientEvent("pspray:client_pong");
         }
     }
 }

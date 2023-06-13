@@ -14,15 +14,16 @@ namespace Client
 
         }
 
-        [EventHandler("client_pong")]
+        [EventHandler("pspray:client_pong")]
         private void clientTest()
         {
             Debug.WriteLine("Server has Ponged me");
         }
 
         [Command("ping")]
-        private void ping()
+        private void ping(int src, List<object> args, string raw)
         {
+            Debug.WriteLine(raw);
             Debug.WriteLine("Calling Server with a Ping");
             TriggerServerEvent("server_ping");
         }

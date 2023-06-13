@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Client.cs" />
     <Compile Include="Functions\Font_Function.cs" />
+    <Compile Include="Functions\Spray_Function.cs" />
     <Compile Include="Functions\ThreadExample.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
