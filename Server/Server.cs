@@ -20,5 +20,6 @@ namespace Server
             Debug.WriteLine("I'm inside the server?");
             TriggerClientEvent("pspray:client_pong");
         }
+
     }
 }

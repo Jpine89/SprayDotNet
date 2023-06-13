@@ -29,9 +29,7 @@ namespace Client.Functions
             Tick += Sprays;
 
             //Can be removed once Menu Client Calls Server to save.
-            RegisterKeyMapping("pspray:SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
-
-
+            //RegisterKeyMapping("pspray:SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
 
         }
 
@@ -88,16 +86,20 @@ namespace Client.Functions
                     RotationCoords = FinalRotation
                 };
 
+                if(ScaleFormList.ContainsKey(SCAFLEFORM_MAX))
+                    DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
                 //Debug.WriteLine(ScaleFormList.ContainsKey(SCAFLEFORM_MAX).ToString());
-                DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
+
             }
         }
 
         [Command("PSpray")]
+        [EventHandler("pspray:start_spray")]
         public void InitializeSpray()
         {
             isSpray = true;
             sprayText = "Spray Template";
+            TriggerEvent("pspray:open_menu");
         }
 
         public void DrawSpray(int scaleFormHandle, Spray spray)
@@ -153,19 +155,24 @@ namespace Client.Functions
          */
 
 
-        [Command("pspray:SaveSpray")]
-        public void SaveSpray()
+        [EventHandler("pspray:SaveSpray")]
+        public void SaveSpray(string text, bool saveSpray)
         {
-            if (isSpray)
+            Debug.WriteLine("We are in SaveSpray");
+            if (isSpray && saveSpray)
             {
-                isSpray = false;
+                Spray_Text_Update(text);
                 SPRAYS.Add(newSpray);
                 newSpray = new Spray();
             }
-
+            isSpray = false;
         }
 
-
+        [EventHandler("pspray:spray_text_update")]
+        private void Spray_Text_Update(string text)
+        {
+            sprayText = text;
+        }
         public void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
 

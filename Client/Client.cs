@@ -17,7 +17,7 @@ namespace Client
         [EventHandler("pspray:client_pong")]
         private void clientTest()
         {
-            Debug.WriteLine("Server has Ponged me");
+            Debug.WriteLine("Client/Server has Ponged me");
         }
 
         [Command("ping")]
@@ -25,7 +25,27 @@ namespace Client
         {
             Debug.WriteLine(raw);
             Debug.WriteLine("Calling Server with a Ping");
-            TriggerServerEvent("server_ping");
+            TriggerServerEvent("pspray:server_ping");
+        }
+
+        [Command("clientping")]
+        private void ClientPing()
+        {
+            TriggerEvent("pspray:client_pong");
+        }
+
+
+        [Command("oldspawn")]
+        private void testspawn()
+        {
+            Debug.WriteLine("Inside Old Spawn");
+            Exports["spawnmanager"].spawnPlayer(new
+            {
+                x = 0,
+                y = 0,
+                z = 0,
+                model = "s_m_y_cop_01"
+            });
         }
     }
 }

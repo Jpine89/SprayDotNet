@@ -16,7 +16,7 @@ namespace Client.Functions
 
         public ThreadExample()
         {
-            //TMC = Exports["core"].getCoreObject();
+            TMC = Exports["core"].getCoreObject();
 
             //RegisterNuiCallback("close", new Action<IDictionary<string, object>, CallbackDelegate>(async (body, result) =>
             //{
@@ -32,21 +32,9 @@ namespace Client.Functions
             //RegisterCommand("thread", new Action(TestThreads), false);
         }
 
-        [Command("oldspawn")]
-        private void testspawn()
-        {
-            Debug.WriteLine("Inside Old Spawn");
-            Exports["spawnmanager"].spawnPlayer(new
-            {
-                x = 0,
-                y = 0,
-                z = 0,
-                model = "s_m_y_cop_01"
-            });
-        }
-
         [Command("DoIt")]
-        private void test()
+        [EventHandler("pspray:open_menu")]
+        private void TMCMenu()
         {
             Elements elm = new Elements()
             {
@@ -56,7 +44,7 @@ namespace Client.Functions
                 value = "tester",
                 multiline = true
             };
-            Elements confirmbtn = new Elements() { 
+            Elements confirmbtn = new Elements() {
                 type = "button",
                 name = "button_test",
                 label = "Button Test",
@@ -75,10 +63,19 @@ namespace Client.Functions
         }
         private void close(dynamic change, bool confirm)
         {
-            string test = JsonConvert.SerializeObject(change);
-            Debug.WriteLine("test close");
-            Debug.WriteLine(test);
-            Debug.WriteLine($"{confirm}");
+            TmcChangeFunc sendToSave = new TmcChangeFunc();
+            sendToSave.SaveSpray = false;
+            if (confirm)
+            {
+                string test = JsonConvert.SerializeObject(change);
+                sendToSave = JsonConvert.DeserializeObject<TmcChangeFunc>(test);
+                Debug.WriteLine("test close");
+                Debug.WriteLine(test);
+                Debug.WriteLine($"{confirm}");
+                sendToSave.SaveSpray = true;
+            }
+            //Spray_Function.SaveSpray(sendToSave);
+            TriggerEvent("pspray:SaveSpray", sendToSave.Text, sendToSave.SaveSpray);
         }
         private void something()
         {
@@ -86,9 +83,14 @@ namespace Client.Functions
         }
         private void testFunc(dynamic change)
         {
-            string test = JsonConvert.SerializeObject(change);
             Debug.WriteLine("test func");
+            string test = JsonConvert.SerializeObject(change);
+
+            
             Debug.WriteLine(test);
+            var changed = JsonConvert.DeserializeObject<TmcChangeFunc>(test);
+            Debug.WriteLine(changed.NewValue);
+            TriggerEvent("pspray:spray_text_update", changed.NewValue);
         }
 
         private async Task ThreadExample_Tick()
@@ -112,7 +114,7 @@ namespace Client.Functions
         }
     }
 
-    public class Elements{
+    public class Elements {
         public string type { get; set; }
         public string name { get; set; }
         public string label { get; set; }
@@ -122,6 +124,15 @@ namespace Client.Functions
         public string cat { get; set; }
         public string icon { get; set; }
         public bool disabled { get; set; }
-        
+
+    }
+
+    public class TmcChangeFunc{
+        public string NewValue { get; set; }
+        public string ElementChanged { get; set; }
+        public string OldValue { get; set; }
+        public string MenuNamespace { get; set; }
+        public string Text { get; set; }
+        public bool SaveSpray { get; set; }
     }
 }
