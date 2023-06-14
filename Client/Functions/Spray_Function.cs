@@ -1,11 +1,9 @@
 ﻿using CitizenFX.Core;
-using static CitizenFX.Core.Native.API;
+using Client.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Client.Util;
+using static CitizenFX.Core.Native.API;
 
 namespace Client.Functions
 {
@@ -64,7 +62,7 @@ namespace Client.Functions
             {
                 //Debug.WriteLine(SPRAYS.Count.ToString());
                 //Debug.WriteLine(counter.ToString());
-                
+
                 var ped = GetPlayerPed(-1);
                 var coords = GetEntityCoords(ped, true);
                 if (Vdist(coords.X, coords.Y, coords.Z, spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z) < 25f)
@@ -109,8 +107,20 @@ namespace Client.Functions
                 RotationCoords = FinalRotation
             };
 
-            if (ScaleFormList.ContainsKey(SCAFLEFORM_MAX))
+            bool isControlPressed = false;
+
+            while (!isControlPressed)
+            {
                 DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
+
+                await Delay(0);
+
+                if (Game.IsControlJustPressed(0, Control.FrontendAccept))
+                {
+                    isControlPressed = true;
+                    SPRAYS.Add(newSpray);
+                }
+            }
         }
 
         public void TempSave()
@@ -149,7 +159,7 @@ namespace Client.Functions
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
             if (spray.HasChanged)
             {
-                Debug.WriteLine($"Spray Form Handle : {scaleFormHandle} || and the Sprayname :: {spray.Text}" );
+                Debug.WriteLine($"Spray Form Handle : {scaleFormHandle} || and the Sprayname :: {spray.Text}");
                 PushScaleformMovieFunction(scaleFormHandle, "SET_PLAYER_NAME");
                 PushScaleformMovieFunctionParameterString(SprayUserData);
                 //PushScaleformMovieFunctionParameterString("Small Text");
