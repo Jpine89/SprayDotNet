@@ -86,31 +86,34 @@ namespace Client.Functions
         }
 
         [Command("PSpray")]
-        public async void startSpray()
+        public async void startSpray(int source, List<object> arguments, string raw)
         {
-            //isSpray = true;
-            //sprayText = ;
-
-
-            Vector3 LocationData = new Vector3();
-            Vector3 rotationData = new Vector3();
-            RayCastGamePlayCamera(ref LocationData, ref rotationData);
-            await RunCameraMethod(LocationData, rotationData);
-            LocationData += (rotationData * FORWARD_OFFSET);
-
-            newSpray = new Spray()
-            {
-                Text = "Spray Template " + tracker,
-                Font = "Beat Street",
-                Color = "#FA1C09",
-                LocationCoords = LocationData,
-                RotationCoords = FinalRotation
-            };
-
             bool isControlPressed = false;
+
+            string sprayText = "Spray Template " + tracker;
+
+            if (arguments.Count > 0)
+            {
+                sprayText = arguments[0].ToString();
+            }
 
             while (!isControlPressed)
             {
+                Vector3 LocationData = new Vector3();
+                Vector3 rotationData = new Vector3();
+                RayCastGamePlayCamera(ref LocationData, ref rotationData);
+                await RunCameraMethod(LocationData, rotationData);
+                LocationData += (rotationData * FORWARD_OFFSET);
+
+                newSpray = new Spray()
+                {
+                    Text = sprayText,
+                    Font = "Beat Street",
+                    Color = "#FA1C09",
+                    LocationCoords = LocationData,
+                    RotationCoords = FinalRotation
+                };
+
                 DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
 
                 await Delay(0);
