@@ -2,6 +2,7 @@
 using Client.Util;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using static CitizenFX.Core.Native.API;
 
@@ -9,87 +10,98 @@ namespace Client.Functions
 {
     class Spray_Function : BaseScript
     {
-        public static Entity HitEntity { get; set; }
-        public Vector3 FinalRotation { get; set; }
-        private List<Spray> SPRAYS = new List<Spray>();
-        public string sprayText = "";
-        public bool isSpray = false;
+        private List<Spray> _sprays = new();
+        private List<Spray> _spraysInRange = new();
+        private Spray _tempSpray = null;
+
+        private Dictionary<int, Scaleform> _scaleforms = new();
+        private const string SCALEFORM_NAME = "PLAYER_NAME_";
+
+        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 15;
+        private const int SCALEFORM_MAX_SCREEN = 12;
+        private const float SCALEFORM_MAX_DISTANCE = 25f;
+
         private const float FORWARD_OFFSET = 0.015f;
-        private Spray newSpray = new Spray();
-        private const int SCAFLEFORM_MIN = 1;
-        private const int SCAFLEFORM_MAX = 12;
-        private Dictionary<int, int> ScaleFormList = new Dictionary<int, int>();
-        int rotCam;
+
+        private Vector3 _sprayFinalRotation { get; set; }
+        private int _camera;
 
         private int tracker = 1;
 
         public Spray_Function()
         {
-            Tick += LoadScaleForms;
-            Tick += Sprays;
+            Init();
 
-            RegisterKeyMapping("+SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
-            RegisterCommand("+SaveSpray", new Action(TempSave), false);
+
+            //RegisterKeyMapping("+SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
+            //RegisterCommand("+SaveSpray", new Action(TempSave), false);
         }
 
+        async void Init()
+        {
+            await LoadScaleForms();
+            Tick += DrawSpraysInRangeAsync;
+        }
+
+        /// <summary>
+        /// Creates all the Scaleforms which will be used for the spray text.
+        /// </summary>
+        /// <returns></returns>
         private async Task LoadScaleForms()
         {
-            for (int i = SCAFLEFORM_MIN; i <= SCAFLEFORM_MAX; i++)
+            // 1 - 15 are what matches the PLAYER_NAME Scaleforms in the game.
+            // TODO: Create own scaleform files for the spray text.
+            for (int i = 1; i <= 15; i++)
             {
-                string EndValue = i.ToString();
-                if (i < 10)
-                    EndValue = "0" + EndValue;
-
-                if (HasScaleformMovieLoaded(RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue)))
-                { //If Not Loaded, Check if List Key is open.
-                    if (!ScaleFormList.ContainsKey(i))
-                    {// If Open, insert
-                        ScaleFormList.Add(i, RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue));
-                    }
-                    else
-                    {//If key is used, just replace
-                        ScaleFormList[i] = RequestScaleformMovieInteractive("PLAYER_NAME_" + EndValue);
-                    }
+                Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i:00}");
+                while (!scaleform.IsLoaded)
+                {
+                    await Delay(5);
                 }
             }
-            await Delay(10000);
+            // All scaleforms are loaded
         }
 
-        private async Task Sprays()
+        /// <summary>
+        /// Gets the sprays in range of the player, and orders them by distance.
+        /// </summary>
+        /// <returns></returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        private async Task SpraysInRangeAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            int counter = SCAFLEFORM_MIN;
-            foreach (var spray in SPRAYS)
+            _spraysInRange.Clear();
+
+            Vector3 playerPos = Game.PlayerPed.Position;
+
+            _spraysInRange = _sprays
+                .Where(x => Vector3.Distance(playerPos, x.Location) < SCALEFORM_MAX_DISTANCE)
+                .OrderBy(x => Vector3.Distance(playerPos, x.Location))
+                .Take(SCALEFORM_MAX_SCREEN)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Draws the sprays from _spraysInRange.
+        /// </summary>
+        /// <returns></returns>
+        private async Task DrawSpraysInRangeAsync()
+        {
+            // Get the sprays in range
+            await SpraysInRangeAsync();
+
+            // foreach spray in range, draw it
+            for (int i = 0; i < _spraysInRange.Count; i++)
             {
-                //Debug.WriteLine(SPRAYS.Count.ToString());
-                //Debug.WriteLine(counter.ToString());
-
-                var ped = GetPlayerPed(-1);
-                var coords = GetEntityCoords(ped, true);
-                if (Vdist(coords.X, coords.Y, coords.Z, spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z) < 25f)
-                {
-                    DrawSpray(ScaleFormList[counter], spray);
-                    counter++;
-                    //spray.HasChanged = false;
-                }
-
-
-                if (counter >= SCAFLEFORM_MAX)
-                    break;
+                Spray spray = _spraysInRange[i];
+                spray.Scaleform = _scaleforms[i];
+                spray.Draw();
             }
-
-            //if (isSpray)
-            //{
-
-            //    //Debug.WriteLine(ScaleFormList.ContainsKey(SCAFLEFORM_MAX).ToString());
-
-            //}
         }
 
         [Command("PSpray")]
-        public async void startSpray(int source, List<object> arguments, string raw)
+        public void CommandSpray(int source, List<object> arguments, string raw)
         {
-            bool isControlPressed = false;
-
             string sprayText = "Spray Template " + tracker;
 
             if (arguments.Count > 0)
@@ -97,130 +109,129 @@ namespace Client.Functions
                 sprayText = arguments[0].ToString();
             }
 
-            while (!isControlPressed)
+            // Create the temporary spray
+            if (_tempSpray == null)
             {
-                Vector3 LocationData = new Vector3();
-                Vector3 rotationData = new Vector3();
-                RayCastGamePlayCamera(ref LocationData, ref rotationData);
-                await RunCameraMethod(LocationData, rotationData);
-                LocationData += (rotationData * FORWARD_OFFSET);
+                _tempSpray = new Spray();
+            }
 
-                newSpray = new Spray()
-                {
-                    Text = sprayText,
-                    Font = "Beat Street",
-                    Color = "#FA1C09",
-                    LocationCoords = LocationData,
-                    RotationCoords = FinalRotation
-                };
+            // Set the spray initial information (font, color, text)
+            _tempSpray.Text = sprayText;
 
-                DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
+            // Set the spray scaleform to the private spray scaleform
+            _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
 
-                await Delay(0);
+            // Check if the camera exists, if it does then destroy it
+            if (DoesCamExist(_camera))
+                DestroyCam(_camera, false);
 
-                if (Game.IsControlJustPressed(0, Control.FrontendAccept))
-                {
-                    isControlPressed = true;
-                    SPRAYS.Add(newSpray);
-                }
+            // Create the camera
+            _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
+
+            // Start the tick event
+            Tick += SetSprayPositionAsync;
+        }
+
+        private async Task SetSprayPositionAsync()
+        {
+            Vector3 coords = new();
+            Vector3 rotation = new();
+
+            RayCastGamePlayCamera(ref coords, ref rotation);
+
+            await RunCameraMethod(coords, rotation);
+            coords += (rotation * FORWARD_OFFSET);
+
+            // update the spray position and rotation
+            _tempSpray.Location = coords;
+            _tempSpray.Rotation = _sprayFinalRotation;
+
+            // draw the spray
+            _tempSpray.Draw();
+
+            // Check if the player has pressed the accept button (Enter)
+            if (Game.IsControlJustPressed(0, Control.FrontendAccept))
+            {
+                // Add the spray to the list
+                _sprays.Add(_tempSpray);
+
+                // Reset the temp spray
+                _tempSpray = null;
+
+                // Check if the camera exists, if it does then destroy it
+                if (DoesCamExist(_camera))
+                    DestroyCam(_camera, false);
+
+                // Remove the tick event
+                Tick -= SetSprayPositionAsync;
             }
         }
 
-        public void TempSave()
-        {
-            SPRAYS.Add(newSpray);
-            newSpray = new Spray();
-            isSpray = false;
-            tracker++;
-        }
+        //public void TempSave()
+        //{
+        //    _sprays.Add(newSpray);
+        //    newSpray = new Spray();
+        //    isSpray = false;
+        //    tracker++;
+        //}
 
 
-        [EventHandler("pspray:start_spray")]
-        public void InitializeSpray()
-        {
-            isSpray = true;
-            sprayText = "Spray Template " + tracker;
-            TriggerEvent("pspray:open_menu");
-        }
+        //[EventHandler("pspray:start_spray")]
+        //public void InitializeSpray()
+        //{
+        //    isSpray = true;
+        //    sprayText = "Spray Template " + tracker;
+        //    TriggerEvent("pspray:open_menu");
+        //}
 
-        [EventHandler("pspray:SaveSpray")]
-        public void SaveSpray(string text, bool saveSpray)
-        {
-            Debug.WriteLine("We are in SaveSpray");
-            if (isSpray && saveSpray)
-            {
-                Spray_Text_Update(text);
-                SPRAYS.Add(newSpray);
-                newSpray = new Spray();
-            }
-            isSpray = false;
-            tracker++;
-        }
-
-        public void DrawSpray(int scaleFormHandle, Spray spray)
-        {
-            string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
-            if (spray.HasChanged)
-            {
-                Debug.WriteLine($"Spray Form Handle : {scaleFormHandle} || and the Sprayname :: {spray.Text}");
-                PushScaleformMovieFunction(scaleFormHandle, "SET_PLAYER_NAME");
-                PushScaleformMovieFunctionParameterString(SprayUserData);
-                //PushScaleformMovieFunctionParameterString("Small Text");
-                PushScaleformMovieFunctionParameterInt(5);
-                PopScaleformMovieFunctionVoid();
-                spray.HasChanged = false;
-            }
-            //PushScaleformMovieFunction(scaleFormHandle, "SHOW_SHARD_WASTED_MP_MESSAGE");
-
-            //await Delay(0);
-
-            DrawScaleformMovie_3dSolid
-                (
-                    scaleFormHandle,
-                    spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z,
-                    spray.RotationCoords.X, spray.RotationCoords.Y, spray.RotationCoords.Z,
-                    (float)1.0, (float)1.0, (float)1.0, //unk values
-                    (float)2.0, (float)2.0, (float)1.0, //Scale X/Y/Z
-                    2 //always 2?
-                );
-        }
+        //[EventHandler("pspray:SaveSpray")]
+        //public void SaveSpray(string text, bool saveSpray)
+        //{
+        //    Debug.WriteLine("We are in SaveSpray");
+        //    if (isSpray && saveSpray)
+        //    {
+        //        Spray_Text_Update(text);
+        //        _sprays.Add(newSpray);
+        //        newSpray = new Spray();
+        //    }
+        //    isSpray = false;
+        //    tracker++;
+        //}
 
         /*
          * ToDo
          * Add not only Functionality, but new class to handle this
          */
-        public void RemoveSpray()
-        {
-            //Has Info 
-            //p_loose_rag_01_s  -> 921993182
-            var ragProp = CreateObject(
-                            921993182,
-                            (float)0.0, (float)0.0, (float)0.0,
-                            true, false, false
-                            );
+        //public void RemoveSpray()
+        //{
+        //    //Has Info 
+        //    //p_loose_rag_01_s  -> 921993182
+        //    var ragProp = CreateObject(
+        //                    921993182,
+        //                    (float)0.0, (float)0.0, (float)0.0,
+        //                    true, false, false
+        //                    );
 
-            var ped = PlayerPedId();
-            var test = GetPedBoneIndex(ped, 28422);
+        //    var ped = PlayerPedId();
+        //    var test = GetPedBoneIndex(ped, 28422);
 
-            Debug.WriteLine(ped.ToString());
-            Debug.WriteLine(test.ToString());
+        //    Debug.WriteLine(ped.ToString());
+        //    Debug.WriteLine(test.ToString());
 
-            AttachEntityToEntity(ragProp, ped, GetPedBoneIndex(ped, 28422), (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, true, true, false, true, 1, true);
-        }
+        //    AttachEntityToEntity(ragProp, ped, GetPedBoneIndex(ped, 28422), (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, true, true, false, true, 1, true);
+        //}
 
         /*
          * Logic will want to be built out more on this when
          * Database Logic is being built. Plus NUI
          */
 
+        //[EventHandler("pspray:spray_text_update")]
+        //private void Spray_Text_Update(string text)
+        //{
+        //    sprayText = text;
+        //}
 
-
-
-        [EventHandler("pspray:spray_text_update")]
-        private void Spray_Text_Update(string text)
-        {
-            sprayText = text;
-        }
         public void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
 
@@ -252,6 +263,7 @@ namespace Client.Functions
                 rotation = surfaceNormalArg2;
             }
         }
+
         public static Vector3 RotationToDirection(Vector3 rotation)
         {
             float pi = (float)Math.PI / 180f;
@@ -271,44 +283,34 @@ namespace Client.Functions
 
         public async Task RunCameraMethod(Vector3 WantedLocation, Vector3 WantedRotation)
         {
-            if (DoesCamExist(rotCam))
-                DestroyCam(rotCam, false);
-
-            rotCam = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
             Vector3 currentSprayRotation = new Vector3();
             int reCheck = 30;
-            while (true)
+
+            if (WantedLocation != null && WantedRotation != null)
             {
-                await Delay(0);
+                if (reCheck >= 0)
+                    reCheck--;
 
-                if (WantedLocation != null && WantedRotation != null)
+                if (currentSprayRotation != WantedRotation || reCheck < 0)
                 {
-                    if (reCheck >= 0)
-                        reCheck--;
+                    reCheck = 30;
 
-                    if (currentSprayRotation != WantedRotation || reCheck < 0)
+                    var wantedSprayRotationFixed = new Vector3()
                     {
-                        reCheck = 30;
-                        var wantedSprayRotationFixed = new Vector3()
-                        {
-                            X = WantedRotation.X,
-                            Y = WantedRotation.Y,
-                            Z = WantedRotation.Z + 0.03f
-                        };
+                        X = WantedRotation.X,
+                        Y = WantedRotation.Y,
+                        Z = WantedRotation.Z + 0.03f
+                    };
 
-                        var camLookPosition = WantedLocation - wantedSprayRotationFixed * 10;
-                        SetCamCoord(rotCam, WantedLocation.X, WantedLocation.Y, WantedLocation.Z);
-                        PointCamAtCoord(rotCam, camLookPosition.X, camLookPosition.Y, camLookPosition.Z);
-                        SetCamActive(rotCam, true);
-                        await Delay(2);
-                        var rot = GetCamRot(rotCam, 2);
-                        SetCamActive(rotCam, false);
+                    var camLookPosition = WantedLocation - wantedSprayRotationFixed * 10;
+                    SetCamCoord(_camera, WantedLocation.X, WantedLocation.Y, WantedLocation.Z);
+                    PointCamAtCoord(_camera, camLookPosition.X, camLookPosition.Y, camLookPosition.Z);
+                    SetCamActive(_camera, true);
+                    await Delay(2);
+                    var cameraRotation = GetCamRot(_camera, 2);
+                    SetCamActive(_camera, false);
 
-
-                        currentSprayRotation = WantedRotation;
-                        FinalRotation = rot;
-                        break;
-                    }
+                    _sprayFinalRotation = cameraRotation;
                 }
             }
         }
