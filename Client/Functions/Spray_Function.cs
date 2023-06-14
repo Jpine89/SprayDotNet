@@ -1,11 +1,9 @@
 ﻿using CitizenFX.Core;
-using static CitizenFX.Core.Native.API;
+using Client.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Client.Util;
+using static CitizenFX.Core.Native.API;
 
 namespace Client.Functions
 {
@@ -64,7 +62,7 @@ namespace Client.Functions
             {
                 //Debug.WriteLine(SPRAYS.Count.ToString());
                 //Debug.WriteLine(counter.ToString());
-                
+
                 var ped = GetPlayerPed(-1);
                 var coords = GetEntityCoords(ped, true);
                 if (Vdist(coords.X, coords.Y, coords.Z, spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z) < 25f)
@@ -88,29 +86,44 @@ namespace Client.Functions
         }
 
         [Command("PSpray")]
-        public async void startSpray()
+        public async void startSpray(int source, List<object> arguments, string raw)
         {
-            //isSpray = true;
-            //sprayText = ;
+            bool isControlPressed = false;
 
+            string sprayText = "Spray Template " + tracker;
 
-            Vector3 LocationData = new Vector3();
-            Vector3 rotationData = new Vector3();
-            RayCastGamePlayCamera(ref LocationData, ref rotationData);
-            await RunCameraMethod(LocationData, rotationData);
-            LocationData += (rotationData * FORWARD_OFFSET);
-
-            newSpray = new Spray()
+            if (arguments.Count > 0)
             {
-                Text = "Spray Template " + tracker,
-                Font = "Beat Street",
-                Color = "#FA1C09",
-                LocationCoords = LocationData,
-                RotationCoords = FinalRotation
-            };
+                sprayText = arguments[0].ToString();
+            }
 
-            if (ScaleFormList.ContainsKey(SCAFLEFORM_MAX))
+            while (!isControlPressed)
+            {
+                Vector3 LocationData = new Vector3();
+                Vector3 rotationData = new Vector3();
+                RayCastGamePlayCamera(ref LocationData, ref rotationData);
+                await RunCameraMethod(LocationData, rotationData);
+                LocationData += (rotationData * FORWARD_OFFSET);
+
+                newSpray = new Spray()
+                {
+                    Text = sprayText,
+                    Font = "Beat Street",
+                    Color = "#FA1C09",
+                    LocationCoords = LocationData,
+                    RotationCoords = FinalRotation
+                };
+
                 DrawSpray(ScaleFormList[SCAFLEFORM_MAX], newSpray);
+
+                await Delay(0);
+
+                if (Game.IsControlJustPressed(0, Control.FrontendAccept))
+                {
+                    isControlPressed = true;
+                    SPRAYS.Add(newSpray);
+                }
+            }
         }
 
         public void TempSave()
@@ -149,7 +162,7 @@ namespace Client.Functions
             string SprayUserData = $"<FONT color='{spray.Color}' FACE='Beat Street'> {spray.Text} ";
             if (spray.HasChanged)
             {
-                Debug.WriteLine($"Spray Form Handle : {scaleFormHandle} || and the Sprayname :: {spray.Text}" );
+                Debug.WriteLine($"Spray Form Handle : {scaleFormHandle} || and the Sprayname :: {spray.Text}");
                 PushScaleformMovieFunction(scaleFormHandle, "SET_PLAYER_NAME");
                 PushScaleformMovieFunctionParameterString(SprayUserData);
                 //PushScaleformMovieFunctionParameterString("Small Text");
