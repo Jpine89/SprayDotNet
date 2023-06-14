@@ -18,7 +18,7 @@ namespace Client
         public Main()
         {
             
-            EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
+            //EventHandlers["onClientResourceStart"] += new Action<string>(OnClientResourceStart);
 
             //RegisterCommand("PSpray", new Action<int, List<object>, string>((source, args, raw) =>
             //{

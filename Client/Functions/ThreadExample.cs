@@ -17,19 +17,6 @@ namespace Client.Functions
         public ThreadExample()
         {
             TMC = Exports["core"].getCoreObject();
-
-            //RegisterNuiCallback("close", new Action<IDictionary<string, object>, CallbackDelegate>(async (body, result) =>
-            //{
-            //    Debug.WriteLine("Testing Close Callback");
-            //    result(new { ok = true });
-            //}));
-
-            //RegisterScript(this);
-            //UnregisterScript(this);
-            //Interval 1000;
-            //Tick += ThreadExample_Tick;
-
-            //RegisterCommand("thread", new Action(TestThreads), false);
         }
 
         [Command("DoIt")]
