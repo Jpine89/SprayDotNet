@@ -15,7 +15,6 @@
                 // Only update if the scaleform has changed
                 if (value != _scaleform)
                 {
-                    _scaleform.CallFunction("SET_PLAYER_NAME", "");
                     _scaleform = value;
                     SetScaleformText();
                 }
