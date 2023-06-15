@@ -6,8 +6,8 @@ namespace Client.Util
     {
         private Scaleform _scaleform;
         private string _text;
-        private string _font;
-        private string _color;
+        private string _font = "Beat Street";
+        private string _color = "#FA1C09";
 
         public Scaleform Scaleform
         {
