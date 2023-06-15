@@ -21,6 +21,7 @@ namespace Spray.Client.Scripts
         private const float SCALEFORM_MAX_DISTANCE = 25f; // 25m is the max distance for the max screen scaleform.
 
         private const float FORWARD_OFFSET = 0.015f;
+        private Vector3 _previousDistance;
 
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
@@ -82,9 +83,17 @@ namespace Spray.Client.Scripts
         private async Task SpraysInRangeAsync()
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            _spraysInRange.Clear();
-
             Vector3 playerPos = Game.PlayerPed.Position;
+
+            // TODO: Need to allow an update if a new SprayTag is added in range.
+            if (Vector3.Distance(playerPos, _previousDistance) < 10f && _spraysInRange.Count > 0)
+            {
+                return;
+            }
+
+            _previousDistance = playerPos;
+
+            _spraysInRange.Clear();
 
             _spraysInRange = _sprays
                 .Where(x => Vector3.Distance(playerPos, x.Location) < SCALEFORM_MAX_DISTANCE)
@@ -203,6 +212,11 @@ namespace Spray.Client.Scripts
             {
                 // Add the spray to the list
                 _sprays.Add(_tempSpray);
+
+                if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
+                {
+                    _spraysInRange.Add(_tempSpray);
+                }
 
                 // Reset the temp spray
                 _tempSpray = null;
