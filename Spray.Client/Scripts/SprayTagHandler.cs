@@ -44,9 +44,12 @@ namespace Spray.Client.Scripts
         private async void Init()
         {
             await LoadScaleFormsAsync();
+
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             Main.Instance.AttachTick(ControlsAsync);
+
             RegisterCommand("pspray", new Action<int, List<object>, string>(OnSprayCommand), false);
+
             Debug.WriteLine("^2Spray Tag Handler has been initialised.");
         }
 
@@ -115,7 +118,7 @@ namespace Spray.Client.Scripts
         {
             if (Game.IsControlJustPressed(0, Control.Aim) && _tempSpray is null)
             {
-                OnSprayCommand(0, new List<object>(), "pspray");
+                CreateNewSpray("Aim Spray Tag Created");
             }
         }
 
@@ -129,44 +132,46 @@ namespace Spray.Client.Scripts
         {
             try
             {
-                Debug.WriteLine($"^2Spray Command Called: {raw}");
-
                 string sprayText = $"Spray Template {_sprays.Count}";
-
                 if (arguments.Count > 0)
                 {
                     sprayText = arguments[0].ToString();
                 }
 
-                // Create the temporary spray
-                if (_tempSpray == null || _tempSpray?.Scaleform is null)
-                {
-                    _tempSpray = new SprayTag();
-                }
-
-                // Set the spray initial information (font, color, text)
-                _tempSpray.Text = sprayText;
-                _tempSpray.Font = FontHandler.Instance.GetRandomFont();
-                _tempSpray.Color = $"#{Main.Random.Next(0x1000000):X6}"; // Random color
-
-                // Set the spray scaleform to the private spray scaleform
-                _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
-
-                // Check if the camera exists, if it does then destroy it
-                if (DoesCamExist(_camera))
-                    DestroyCam(_camera, false);
-
-                // Create the camera
-                _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
-
-                // Start the tick event
-                Main.Instance.AttachTick(SetSprayPositionAsync);
+                CreateNewSpray(sprayText);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"^1Error: {ex.Message}");
                 Debug.WriteLine($"^Stack:\n{ex}");
             }
+        }
+
+        private void CreateNewSpray(string sprayTag)
+        {
+            // Create the temporary spray
+            if (_tempSpray == null || _tempSpray?.Scaleform is null)
+            {
+                _tempSpray = new SprayTag();
+            }
+
+            // Set the spray initial information (font, color, text)
+            _tempSpray.Text = sprayTag;
+            _tempSpray.Font = FontHandler.Instance.GetRandomFont();
+            _tempSpray.Color = $"#{Main.Random.Next(0x1000000):X6}"; // Random color
+
+            // Set the spray scaleform to the private spray scaleform
+            _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
+
+            // Check if the camera exists, if it does then destroy it
+            if (DoesCamExist(_camera))
+                DestroyCam(_camera, false);
+
+            // Create the camera
+            _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
+
+            // Start the tick event
+            Main.Instance.AttachTick(SetSprayPositionAsync);
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

@@ -8,6 +8,8 @@ namespace Spray.Client
         public static int GameTime { get; private set; }
         public static Random Random { get; } = new Random(GetGameTimer());
 
+        public ExportDictionary ExportDictionary => Exports;
+
         public Main()
         {
             Instance = this;
