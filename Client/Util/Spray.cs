@@ -11,12 +11,15 @@ namespace Client.Util
     class Spray {
         private string _text;
         private string _color;
+        private int _id;
         public Vector3 LocationCoords { get; set; }
         public Vector3 RotationCoords { get; set; }
+        public int SprayId { 
+            get => _id; 
+            set { _id = value; HasChanged = true; } }
         public string Text { get => _text; set
             {
                 _text = value;
-                HasChanged = true;
             }
         }
         public string Font { get; set; }

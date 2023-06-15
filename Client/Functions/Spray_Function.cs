@@ -52,7 +52,7 @@ namespace Client.Functions
                     }
                 }
             }
-            await Delay(10000);
+            await Delay(1000);
         }
 
         private async Task Sprays()
@@ -67,6 +67,9 @@ namespace Client.Functions
                 var coords = GetEntityCoords(ped, true);
                 if (Vdist(coords.X, coords.Y, coords.Z, spray.LocationCoords.X, spray.LocationCoords.Y, spray.LocationCoords.Z) < 25f)
                 {
+                    if(spray.SprayId != counter)
+                        spray.SprayId = counter;
+
                     DrawSpray(ScaleFormList[counter], spray);
                     counter++;
                     //spray.HasChanged = false;
@@ -107,6 +110,7 @@ namespace Client.Functions
 
                 newSpray = new Spray()
                 {
+                    SprayId = ScaleFormList[SCAFLEFORM_MAX],
                     Text = sprayText,
                     Font = "Beat Street",
                     Color = "#FA1C09",
