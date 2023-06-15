@@ -48,7 +48,7 @@ namespace Spray.Client.Scripts
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             Main.Instance.AttachTick(ControlsAsync);
 
-            RegisterCommand("pspray", new Action<int, List<object>, string>(OnSprayCommand), false);
+            RegisterCommand("spray", new Action<int, List<object>, string>(OnSprayCommand), false);
 
             Debug.WriteLine("^2Spray Tag Handler has been initialised.");
         }
