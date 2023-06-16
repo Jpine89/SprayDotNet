@@ -3,7 +3,7 @@ fx_version "cerulean"
 
 author "@Jpine89 <https://github.com/Jpine89>"
 description "Spray tags on walls and other surfaces."
-version "1.0.0"
+version "0.5.0"
 
 files {
     "client/Newtonsoft.Json.dll",

@@ -59,7 +59,7 @@ namespace Spray.Client.Scripts
                 AddonFont font = _fonts[i];
                 RegisterFontFile(font.FileName);
                 font.Id = RegisterFontId(font.Name);
-                Debug.WriteLine($"Registered font: {font.Name} ({font.FileName}) with ID: {font.Id}");
+                //Debug.WriteLine($"Registered font: {font.Name} ({font.FileName}) with ID: {font.Id}");
             }
         }
     }

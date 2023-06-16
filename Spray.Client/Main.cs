@@ -8,20 +8,22 @@ namespace Spray.Client
         public static int GameTime { get; private set; }
         public static Random Random { get; } = new Random(GetGameTimer());
 
-        public ExportDictionary ExportDictionary => Exports;
+        public ExportDictionary _ExportDictionary => Exports;
+        public EventHandlerDictionary EventHandlerDictionary => EventHandlers;
 
         public Main()
         {
             Instance = this;
             InitialiseScripts();
 
-            Debug.WriteLine("^2Spray.Client has been initialised.");
+            Debug.WriteLine("^2PSpray.Client has been initialised.");
         }
 
         private void InitialiseScripts()
         {
             _ = Scripts.FontHandler.Instance;
             _ = Scripts.SprayTagHandler.Instance;
+            _ = Scripts.TMCHandler.Instance;
         }
 
         /// <summary>

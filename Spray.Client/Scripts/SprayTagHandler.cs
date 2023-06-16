@@ -49,9 +49,16 @@ namespace Spray.Client.Scripts
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             Main.Instance.AttachTick(ControlsAsync);
 
-            RegisterCommand("spray", new Action<int, List<object>, string>(OnSprayCommand), false);
+            //RegisterCommand("pspray2", new Action<int, List<object>, string>(OnSprayCommand), false);
+            //Main.Instance.AddEventHandler("pspray:test", new Action(Test));
+            Main.Instance.EventHandlerDictionary.Add("pspray:test", new Action(Test));
 
-            Debug.WriteLine("^2Spray Tag Handler has been initialised.");
+            Debug.WriteLine("^2PSpray Tag Handler has been initialised.");
+        }
+
+        private void Test()
+        {
+            Debug.WriteLine("Test Event Handle Worked.");
         }
 
         /// <summary>

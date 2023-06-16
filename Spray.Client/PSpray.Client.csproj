@@ -25,7 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitizenFX.Core.Client" Version="1.0.6352" ExcludeAssets="runtime" />
+    <PackageReference Include="CitizenFX.Core.Client" Version="1.0.6370" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" ExcludeAssets="Compile" GeneratePathProperty="true" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json">
@@ -34,8 +34,9 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /f /r /y /i bin\Debug ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Debug'" />
-    <Exec Command="xcopy /f /r /y /i bin\Release ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Release'" />
+	<Exec Command="xcopy /f /r /y /i bin\Debug ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Debug'" />
+	<Exec Command="xcopy /f /r /y /i bin\Release ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Release'" />
+	<Exec Command="xcopy /f /r /y /i bin\Debug $(FIVEM_SERVER_PATH)\resources\pspray\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files $(FIVEM_SERVER_PATH)\resources\pspray" Condition="'$(Configuration)' == 'Debug'" />
   </Target>
 
 </Project>

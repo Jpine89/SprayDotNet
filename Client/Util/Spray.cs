@@ -18,7 +18,7 @@ namespace Client.Util
                 if (value != _scaleform)
                 {
                     _scaleform = value;
-                    SetScaleformText();
+                    //SetScaleformText();
                 }
             }
         }
@@ -36,7 +36,7 @@ namespace Client.Util
             set
             {
                 _text = value;
-                HasChanged = true;
+                //HasChanged = true;
             }
         }
 
