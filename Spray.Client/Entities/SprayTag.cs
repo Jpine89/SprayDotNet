@@ -1,8 +1,6 @@
-﻿using CitizenFX.Core;
-
-namespace Client.Util
+﻿namespace Spray.Client.Entities
 {
-    internal class Spray
+    internal class SprayTag
     {
         private Scaleform _scaleform;
         private string _text;
@@ -72,10 +70,10 @@ namespace Client.Util
         private void SetScaleformText()
         {
             if (_scaleform == null) return;
-            if (!_scaleform.IsValid) return;
-            if (!_scaleform.IsLoaded) return;
+            if (!_scaleform.IsValid!) return;
+            if (!_scaleform.IsLoaded!) return;
 
-            Scaleform.CallFunction("SET_PLAYER_NAME", $"<FONT color='{Color}' FACE='{Font}'>{Text}</FONT>");
+            Scaleform.CallFunction("SET_PLAYER_NAME", $"<FONT color=\"{Color}\" FACE=\"{Font}\">{Text}");
         }
 
         /// <summary>
@@ -84,8 +82,8 @@ namespace Client.Util
         public void Draw()
         {
             if (_scaleform == null) return;
-            if (!_scaleform.IsValid) return;
-            if (!_scaleform.IsLoaded) return;
+            if (!_scaleform.IsValid!) return;
+            if (!_scaleform.IsLoaded!) return;
 
             _scaleform.Render3D(Location, Rotation, Scale);
         }

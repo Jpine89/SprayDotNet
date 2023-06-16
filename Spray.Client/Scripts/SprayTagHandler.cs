@@ -1,64 +1,77 @@
-﻿using CitizenFX.Core;
-using Client.Util;
-using System;
+﻿using Spray.Client.Entities;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using static CitizenFX.Core.Native.API;
 
-namespace Client.Functions
+namespace Spray.Client.Scripts
 {
-    class Spray_Function : BaseScript
+    internal class SprayTagHandler
     {
-        private List<Spray> _sprays = new();
-        private List<Spray> _spraysInRange = new();
-        private Spray _tempSpray = null;
+        private static readonly object _padlock = new();
+        private static SprayTagHandler _instance;
+
+        private List<SprayTag> _sprays = new();
+        private List<SprayTag> _spraysInRange = new();
+        private SprayTag _tempSpray = null;
 
         private Dictionary<int, Scaleform> _scaleforms = new();
-        private const string SCALEFORM_NAME = "PLAYER_NAME_";
+        private const string SCALEFORM_NAME = "PLAYER_NAME_"; // PLAYER_NAME_01 - PLAYER_NAME_15 are the scaleforms used for the spray text.
 
-        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 15;
-        private const int SCALEFORM_MAX_SCREEN = 12;
-        private const float SCALEFORM_MAX_DISTANCE = 25f;
+        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 14; // 15th scaleform PLAYER_NAME_15 is the private spray scaleform.
+        private const int SCALEFORM_MAX_SCREEN = 12; // 13th scaleform PLAYER_NAME_13 is the max screen scaleform.
+        private const float SCALEFORM_MAX_DISTANCE = 25f; // 25m is the max distance for the max screen scaleform.
 
         private const float FORWARD_OFFSET = 0.015f;
+        private Vector3 _previousDistance;
 
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
 
-        private int tracker = 1;
-
-        public Spray_Function()
+        private SprayTagHandler()
         {
             Init();
-
-
-            //RegisterKeyMapping("+SaveSpray", "Used to Save Spray", "keyboard", "RETURN");
-            //RegisterCommand("+SaveSpray", new Action(TempSave), false);
         }
 
-        async void Init()
+        internal static SprayTagHandler Instance
         {
-            await LoadScaleForms();
-            Tick += DrawSpraysInRangeAsync;
+            get
+            {
+                lock (_padlock)
+                {
+                    return _instance ??= new SprayTagHandler();
+                }
+            }
+        }
+
+        private async void Init()
+        {
+            await LoadScaleFormsAsync();
+
+            Main.Instance.AttachTick(DrawSpraysInRangeAsync);
+            Main.Instance.AttachTick(ControlsAsync);
+
+            RegisterCommand("spray", new Action<int, List<object>, string>(OnSprayCommand), false);
+
+            Debug.WriteLine("^2Spray Tag Handler has been initialised.");
         }
 
         /// <summary>
         /// Creates all the Scaleforms which will be used for the spray text.
         /// </summary>
         /// <returns></returns>
-        private async Task LoadScaleForms()
+        private async Task LoadScaleFormsAsync()
         {
             // 1 - 15 are what matches the PLAYER_NAME Scaleforms in the game.
             // TODO: Create own scaleform files for the spray text.
-            for (int i = 1; i <= 15; i++)
+            for (int i = 0; i < 15; i++)
             {
-                Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i:00}");
+                Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i + 1:00}");
                 while (!scaleform.IsLoaded)
                 {
-                    await Delay(5);
+                    await BaseScript.Delay(5);
                 }
+                _scaleforms.Add(i, scaleform);
             }
+            Debug.WriteLine($"^2All {_scaleforms.Count} Scaleforms have been loaded.");
             // All scaleforms are loaded
         }
 
@@ -70,9 +83,17 @@ namespace Client.Functions
         private async Task SpraysInRangeAsync()
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            _spraysInRange.Clear();
-
             Vector3 playerPos = Game.PlayerPed.Position;
+
+            // TODO: Need to allow an update if a new SprayTag is added in range.
+            if (Vector3.Distance(playerPos, _previousDistance) < 10f && _spraysInRange.Count > 0)
+            {
+                return;
+            }
+
+            _previousDistance = playerPos;
+
+            _spraysInRange.Clear();
 
             _spraysInRange = _sprays
                 .Where(x => Vector3.Distance(playerPos, x.Location) < SCALEFORM_MAX_DISTANCE)
@@ -93,30 +114,60 @@ namespace Client.Functions
             // foreach spray in range, draw it
             for (int i = 0; i < _spraysInRange.Count; i++)
             {
-                Spray spray = _spraysInRange[i];
+                SprayTag spray = _spraysInRange[i];
                 spray.Scaleform = _scaleforms[i];
                 spray.Draw();
             }
         }
 
-        [Command("PSpray")]
-        public void CommandSpray(int source, List<object> arguments, string raw)
+        // TODO: Add a weapon check to make sure the player has the spray can equipped.
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        private async Task ControlsAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            string sprayText = "Spray Template " + tracker;
-
-            if (arguments.Count > 0)
+            if (Game.IsControlJustPressed(0, Control.Aim) && _tempSpray is null)
             {
-                sprayText = arguments[0].ToString();
+                CreateNewSpray("Aim Spray Tag Created");
             }
+        }
 
-            // Create the temporary spray
-            if (_tempSpray == null)
+        /// <summary>
+        /// Called when the player uses the /spray command.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="arguments"></param>
+        /// <param name="raw"></param>
+        public void OnSprayCommand(int source, List<object> arguments, string raw)
+        {
+            try
             {
-                _tempSpray = new Spray();
+                string sprayText = $"Spray Template {_sprays.Count}";
+                if (arguments.Count > 0)
+                {
+                    sprayText = arguments[0].ToString();
+                }
+
+                CreateNewSpray(sprayText);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"^1Error: {ex.Message}");
+                Debug.WriteLine($"^Stack:\n{ex}");
+            }
+        }
+
+        private void CreateNewSpray(string sprayTag)
+        {
+            // Create the temporary spray
+            if (_tempSpray == null || _tempSpray?.Scaleform is null)
+            {
+                _tempSpray = new SprayTag();
             }
 
             // Set the spray initial information (font, color, text)
-            _tempSpray.Text = sprayText;
+            _tempSpray.Text = sprayTag;
+            _tempSpray.Font = FontHandler.Instance.GetRandomFont();
+            _tempSpray.Color = $"#{Main.Random.Next(0x1000000):X6}"; // Random color
 
             // Set the spray scaleform to the private spray scaleform
             _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
@@ -129,17 +180,23 @@ namespace Client.Functions
             _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
 
             // Start the tick event
-            Tick += SetSprayPositionAsync;
+            Main.Instance.AttachTick(SetSprayPositionAsync);
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task SetSprayPositionAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Vector3 coords = new();
             Vector3 rotation = new();
 
             RayCastGamePlayCamera(ref coords, ref rotation);
 
-            await RunCameraMethod(coords, rotation);
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            // No need to await this, but it needs to be async to update the _sprayFinalRotation
+            RunCameraMethodAsync(coords, rotation);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             coords += (rotation * FORWARD_OFFSET);
 
             // update the spray position and rotation
@@ -150,10 +207,16 @@ namespace Client.Functions
             _tempSpray.Draw();
 
             // Check if the player has pressed the accept button (Enter)
-            if (Game.IsControlJustPressed(0, Control.FrontendAccept))
+            DisableControlAction(0, (int)Control.Attack, true);
+            if (Game.IsDisabledControlJustReleased(0, Control.Attack))
             {
                 // Add the spray to the list
                 _sprays.Add(_tempSpray);
+
+                if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
+                {
+                    _spraysInRange.Add(_tempSpray);
+                }
 
                 // Reset the temp spray
                 _tempSpray = null;
@@ -163,76 +226,11 @@ namespace Client.Functions
                     DestroyCam(_camera, false);
 
                 // Remove the tick event
-                Tick -= SetSprayPositionAsync;
+                Main.Instance.DetachTick(SetSprayPositionAsync);
             }
         }
 
-        //public void TempSave()
-        //{
-        //    _sprays.Add(newSpray);
-        //    newSpray = new Spray();
-        //    isSpray = false;
-        //    tracker++;
-        //}
-
-
-        //[EventHandler("pspray:start_spray")]
-        //public void InitializeSpray()
-        //{
-        //    isSpray = true;
-        //    sprayText = "Spray Template " + tracker;
-        //    TriggerEvent("pspray:open_menu");
-        //}
-
-        //[EventHandler("pspray:SaveSpray")]
-        //public void SaveSpray(string text, bool saveSpray)
-        //{
-        //    Debug.WriteLine("We are in SaveSpray");
-        //    if (isSpray && saveSpray)
-        //    {
-        //        Spray_Text_Update(text);
-        //        _sprays.Add(newSpray);
-        //        newSpray = new Spray();
-        //    }
-        //    isSpray = false;
-        //    tracker++;
-        //}
-
-        /*
-         * ToDo
-         * Add not only Functionality, but new class to handle this
-         */
-        //public void RemoveSpray()
-        //{
-        //    //Has Info 
-        //    //p_loose_rag_01_s  -> 921993182
-        //    var ragProp = CreateObject(
-        //                    921993182,
-        //                    (float)0.0, (float)0.0, (float)0.0,
-        //                    true, false, false
-        //                    );
-
-        //    var ped = PlayerPedId();
-        //    var test = GetPedBoneIndex(ped, 28422);
-
-        //    Debug.WriteLine(ped.ToString());
-        //    Debug.WriteLine(test.ToString());
-
-        //    AttachEntityToEntity(ragProp, ped, GetPedBoneIndex(ped, 28422), (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, (float)0.0, true, true, false, true, 1, true);
-        //}
-
-        /*
-         * Logic will want to be built out more on this when
-         * Database Logic is being built. Plus NUI
-         */
-
-        //[EventHandler("pspray:spray_text_update")]
-        //private void Spray_Text_Update(string text)
-        //{
-        //    sprayText = text;
-        //}
-
-        public void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
+        private void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
 
             float distance = 10f;
@@ -264,7 +262,7 @@ namespace Client.Functions
             }
         }
 
-        public static Vector3 RotationToDirection(Vector3 rotation)
+        private static Vector3 RotationToDirection(Vector3 rotation)
         {
             float pi = (float)Math.PI / 180f;
             float retZ = rotation.Z * pi;
@@ -281,7 +279,7 @@ namespace Client.Functions
             return Dir;
         }
 
-        public async Task RunCameraMethod(Vector3 WantedLocation, Vector3 WantedRotation)
+        private async Task RunCameraMethodAsync(Vector3 WantedLocation, Vector3 WantedRotation)
         {
             Vector3 currentSprayRotation = new Vector3();
             int reCheck = 30;
@@ -306,7 +304,7 @@ namespace Client.Functions
                     SetCamCoord(_camera, WantedLocation.X, WantedLocation.Y, WantedLocation.Z);
                     PointCamAtCoord(_camera, camLookPosition.X, camLookPosition.Y, camLookPosition.Z);
                     SetCamActive(_camera, true);
-                    await Delay(2);
+                    await BaseScript.Delay(2);
                     var cameraRotation = GetCamRot(_camera, 2);
                     SetCamActive(_camera, false);
 
@@ -314,6 +312,5 @@ namespace Client.Functions
                 }
             }
         }
-
     }
 }
