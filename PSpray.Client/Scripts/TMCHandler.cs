@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Spray.Client.Entities;
+using PSpray.Client.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

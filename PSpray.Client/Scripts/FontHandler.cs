@@ -1,4 +1,4 @@
-﻿using Spray.Client.Entities;
+﻿using PSpray.Client.Entities;
 using System.Collections.Generic;
 
 namespace PSpray.Client.Scripts

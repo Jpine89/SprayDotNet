@@ -1,6 +1,4 @@
-﻿
-
-namespace PSpray.Client
+﻿namespace PSpray.Client
 {
     public class Main : BaseScript
     {
