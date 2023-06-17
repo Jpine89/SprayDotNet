@@ -1,55 +1,40 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{21931C4E-5BD0-4B05-B221-BE11513B548A}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PSpray.Client</RootNamespace>
-    <AssemblyName>PSpray.Client</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Entities\AddonFont.cs" />
-    <Compile Include="Entities\SprayTag.cs" />
-    <Compile Include="Entities\TmcWrapper.cs" />
-    <Compile Include="Globals.cs" />
-    <Compile Include="Main.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Scripts\FontHandler.cs" />
-    <Compile Include="Scripts\SprayTagHandler.cs" />
-    <Compile Include="Scripts\TMCHandler.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<AssemblyName>$(MSBuildProjectName).net</AssemblyName>
+		<PackageId>$(AssemblyName).net</PackageId>
+		<LangVersion>latest</LangVersion>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<Configurations>Debug;Release</Configurations>
+		<BaseOutputPath></BaseOutputPath>
+		<GenerateDocumentationFile>False</GenerateDocumentationFile>
+		<AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>$(DefineConstants)TRACE;Client</DefineConstants>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DefineConstants>$(DefineConstants)TRACE;Client</DefineConstants>
+		<Optimize>True</Optimize>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CitizenFX.Core.Client" Version="1.0.6370" />
+		<PackageReference Include="Newtonsoft.Json" Version="12.0.2" ExcludeAssets="Compile" GeneratePathProperty="true" />
+		<Reference Include="Microsoft.CSharp" />
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(PkgNewtonsoft_Json)\lib\portable-net40+sl5+win8+wp8+wpa81\Newtonsoft.Json.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="xcopy /f /r /y /i bin\Debug ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Debug'" />
+		<Exec Command="xcopy /f /r /y /i bin\Release ..\build\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files ..\build" Condition="'$(Configuration)' == 'Release'" />
+		<Exec Command="xcopy /f /r /y /i bin\Debug $(FIVEM_SERVER_PATH)\resources\pspray\client&#xD;&#xA;xcopy /f /r /y /i ..\resource-files $(FIVEM_SERVER_PATH)\resources\pspray" Condition="'$(Configuration)' == 'Debug'" />
+	</Target>
 </Project>
