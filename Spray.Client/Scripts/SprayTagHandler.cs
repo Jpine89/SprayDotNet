@@ -29,6 +29,7 @@ namespace Spray.Client.Scripts
         private SprayTagHandler()
         {
             Init();
+            Debug.WriteLine("^2PSpray Tag Handler has been initialised.");
         }
 
         internal static SprayTagHandler Instance
@@ -47,18 +48,7 @@ namespace Spray.Client.Scripts
             await LoadScaleFormsAsync();
 
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
-            Main.Instance.AttachTick(ControlsAsync);
-
-            //RegisterCommand("pspray2", new Action<int, List<object>, string>(OnSprayCommand), false);
-            //Main.Instance.AddEventHandler("pspray:test", new Action(Test));
-            Main.Instance.EventHandlerDictionary.Add("pspray:test", new Action(Test));
-
-            Debug.WriteLine("^2PSpray Tag Handler has been initialised.");
-        }
-
-        private void Test()
-        {
-            Debug.WriteLine("Test Event Handle Worked.");
+            Main.Instance.EventHandlerDictionary.Add("pspray:start_spray", new Action(SprayInit));
         }
 
         /// <summary>
@@ -127,15 +117,9 @@ namespace Spray.Client.Scripts
             }
         }
 
-        // TODO: Add a weapon check to make sure the player has the spray can equipped.
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        private async Task ControlsAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        private async void SprayInit()
         {
-            if (Game.IsControlJustPressed(0, Control.Aim) && _tempSpray is null)
-            {
-                CreateNewSpray("Aim Spray Tag Created");
-            }
+            CreateNewSpray("Spray Location");
         }
 
         /// <summary>
@@ -235,8 +219,13 @@ namespace Spray.Client.Scripts
                 // Remove the tick event
                 Main.Instance.DetachTick(SetSprayPositionAsync);
             }
-        }
 
+            //if(Game.IsControlJustPressed(0, Control.Aim))
+            //{
+            //    Main.Instance.DetachTick(SetSprayPositionAsync);
+            //}
+        }
+        #region Helper Functions
         private void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
 
@@ -319,5 +308,7 @@ namespace Spray.Client.Scripts
                 }
             }
         }
+        #endregion
+
     }
 }

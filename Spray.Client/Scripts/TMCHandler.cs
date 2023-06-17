@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Spray.Client.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,13 @@ namespace Spray.Client.Scripts
     {
         private static readonly object _padlock = new();
         private static TMCHandler _instance;
+        private TmcWrapper tmc = null;
         private dynamic _tmc;
         private TMCHandler()
         {
             Init();
+
+            Debug.WriteLine("^3TMC Handler Initiated");
         }
         internal static TMCHandler Instance
         {
@@ -29,11 +33,13 @@ namespace Spray.Client.Scripts
 
         private async void Init()
         {
-            //_tmc = Exports["core"].getCoreObject();
-
             _tmc = Main.Instance._ExportDictionary["core"].getCoreObject();
-            RegisterCommand("testEvent", new Action<int, List<object>, string>(TestEvent), false);
-            Debug.WriteLine($"Registered testEvent");
+            RegisterCommand("pspray", new Action<int, List<object>, string>(InitSpray), false);
+        }
+
+        private async void InitSpray(int source, List<object> arguments, string raw)
+        {
+            BaseScript.TriggerEvent("pspray:start_spray");
         }
 
         private void TestEvent(int source, List<object> arguments, string raw)
@@ -63,7 +69,8 @@ namespace Spray.Client.Scripts
                 {"subtitle", "If you have a speciifc" },
                 {"form", true }
             };
-            _tmc.Functions.OpenMenu(setting, elements, new Action<dynamic, bool>(close), new Action(something), new Action<dynamic>(testFunc));
+            tmc.CreateMenu(_tmc);
+            //_tmc.Functions.OpenMenu(setting, elements, new Action<dynamic, bool>(close), new Action(something), new Action<dynamic>(testFunc));
             //BaseScript.TriggerEvent("pspray:test");
         }
         private void close(dynamic change, bool confirm)
