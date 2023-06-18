@@ -46,6 +46,11 @@ namespace PSpray.Client.Scripts
             }
         }
 
+        internal string GetFont(int i)
+        {
+            return _fonts[i].Name;
+        }
+
         internal string GetRandomFont()
         {
             return _fonts[Main.Random.Next(_fonts.Count)].Name;
@@ -62,5 +67,7 @@ namespace PSpray.Client.Scripts
                 //Debug.WriteLine($"Registered font: {font.Name} ({font.FileName}) with ID: {font.Id}");
             }
         }
+
+        internal List<AddonFont> returnList() => _fonts;
     }
 }

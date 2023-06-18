@@ -6,6 +6,9 @@
         private string _text;
         private string _font = "Beat Street";
         private string _color = "#FA1C09";
+        private float _x;
+        private float _y;
+        private float _z;
 
         public Scaleform Scaleform
         {
@@ -23,7 +26,11 @@
 
         public Vector3 Location { get; set; }
         public Vector3 Rotation { get; set; }
-        public Vector3 Scale { get; set; } = new Vector3(2.0f, 2.0f, 1.0f);
+        public Vector3 Scale { get; set; } = new Vector3(2f, 2f, 1f);
+        public void ScaleSet(float i)
+        {   
+            Scale = new Vector3(2f + i, 2f + i, 1f);
+        }
 
         /// <summary>
         /// Set the text of the scaleform

@@ -34,12 +34,13 @@ namespace PSpray.Client.Scripts
         private async void Init()
         {
             _tmc = Main.Instance._ExportDictionary["core"].getCoreObject();
-            RegisterCommand("pspray", new Action<int, List<object>, string>(InitSpray), false);
+            //RegisterCommand("pspray", new Action<int, List<object>, string>(InitSpray), false);
         }
 
         private async void InitSpray(int source, List<object> arguments, string raw)
         {
             BaseScript.TriggerEvent("pspray:start_spray");
+            _tmc.Functions.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", "info", 10000);
         }
 
         private void TestEvent(int source, List<object> arguments, string raw)
@@ -69,7 +70,7 @@ namespace PSpray.Client.Scripts
                 {"subtitle", "If you have a speciifc" },
                 {"form", true }
             };
-            tmc.CreateMenu(_tmc);
+            //tmc.CreateMenu(_tmc);
             //_tmc.Functions.OpenMenu(setting, elements, new Action<dynamic, bool>(close), new Action(something), new Action<dynamic>(testFunc));
             //BaseScript.TriggerEvent("pspray:test");
         }

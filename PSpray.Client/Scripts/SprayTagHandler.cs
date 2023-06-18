@@ -26,6 +26,8 @@ namespace PSpray.Client.Scripts
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
 
+        private dynamic _frameWorkEntity;
+        TmcWrapper TmcWrapper;
         private SprayTagHandler()
         {
             Init();
@@ -45,10 +47,38 @@ namespace PSpray.Client.Scripts
 
         private async void Init()
         {
+            TmcWrapper = new TmcWrapper();
+            EntityFrameWork();
             await LoadScaleFormsAsync();
-
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
-            Main.Instance.EventHandlerDictionary.Add("pspray:start_spray", new Action(SprayInit));
+            SetupEventHandler();
+            SetupRegisterCommands();
+
+        }
+
+        private void SetupEventHandler()
+        {
+            Main.Instance.EventHandlerDictionary.Add("pspray:Init_Spray", new Action(InitSpray));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Save_Spray", new Action(SaveSpray));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Text_Spray", new Action<string>(SprayText));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Scale_Spray", new Action<float>(SprayScale));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Font_Spray", new Action<int>(SprayFont));
+            Main.Instance.EventHandlerDictionary.Add("pspray:End_Spray", new Action(EndSprayCam));
+        }
+
+        private void SetupRegisterCommands()
+        {
+            RegisterCommand("pspray", new Action(InitSpray), false);
+        }
+
+        /// <summary>
+        /// This Function job is to allow for other types of Frameworks to hook into
+        /// the scripts. 
+        /// To do this, you need a custom Wrapper similiar to TmcWrapper. 
+        /// </summary>
+        private void EntityFrameWork()
+        {
+            TmcWrapper.TMC = Main.Instance._ExportDictionary["core"].getCoreObject();
         }
 
         /// <summary>
@@ -76,9 +106,9 @@ namespace PSpray.Client.Scripts
         /// Gets the sprays in range of the player, and orders them by distance.
         /// </summary>
         /// <returns></returns>
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task SpraysInRangeAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Vector3 playerPos = Game.PlayerPed.Position;
 
@@ -117,9 +147,10 @@ namespace PSpray.Client.Scripts
             }
         }
 
-        private async void SprayInit()
+        private void InitSpray()
         {
             CreateNewSpray("Spray Location");
+            TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
         }
 
         /// <summary>
@@ -174,9 +205,9 @@ namespace PSpray.Client.Scripts
             Main.Instance.AttachTick(SetSprayPositionAsync);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task SetSprayPositionAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Vector3 coords = new();
             Vector3 rotation = new();
@@ -184,10 +215,10 @@ namespace PSpray.Client.Scripts
             RayCastGamePlayCamera(ref coords, ref rotation);
 
 
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             // No need to await this, but it needs to be async to update the _sprayFinalRotation
             RunCameraMethodAsync(coords, rotation);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             coords += (rotation * FORWARD_OFFSET);
 
             // update the spray position and rotation
@@ -201,30 +232,45 @@ namespace PSpray.Client.Scripts
             DisableControlAction(0, (int)Control.Attack, true);
             if (Game.IsDisabledControlJustReleased(0, Control.Attack))
             {
-                // Add the spray to the list
-                _sprays.Add(_tempSpray);
-
-                if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
-                {
-                    _spraysInRange.Add(_tempSpray);
-                }
-
-                // Reset the temp spray
-                _tempSpray = null;
-
-                // Check if the camera exists, if it does then destroy it
-                if (DoesCamExist(_camera))
-                    DestroyCam(_camera, false);
-
-                // Remove the tick event
-                Main.Instance.DetachTick(SetSprayPositionAsync);
+                TmcWrapper.CreateMenu(_tempSpray.Text, FontHandler.Instance.returnList());
             }
 
-            //if(Game.IsControlJustPressed(0, Control.Aim))
-            //{
-            //    Main.Instance.DetachTick(SetSprayPositionAsync);
-            //}
+            if (Game.IsControlJustPressed(0, Control.Aim))
+            {
+                EndSprayCam();
+            }
         }
+
+        private void SprayText(string newText) => _tempSpray.Text = newText;
+        private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
+        private void SprayScale(float newScale) => _tempSpray.ScaleSet(newScale);
+
+        private void SaveSpray()
+        {
+            // Add the spray to the list
+            _sprays.Add(_tempSpray);
+
+            if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
+            {
+                _spraysInRange.Add(_tempSpray);
+            }
+
+            // Reset the temp spray
+            _tempSpray = null;
+
+            // Check if the camera exists, if it does then destroy it
+            if (DoesCamExist(_camera))
+                DestroyCam(_camera, false);
+
+            // Remove the tick event
+            Main.Instance.DetachTick(SetSprayPositionAsync);
+        }
+
+        private void EndSprayCam()
+        {
+            Main.Instance.DetachTick(SetSprayPositionAsync);
+        }
+
         #region Helper Functions
         private void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
