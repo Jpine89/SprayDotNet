@@ -21,9 +21,6 @@
         {
             _ = Scripts.FontHandler.Instance;
             _ = Scripts.SprayTagHandler.Instance;
-
-            //Config will handle turning this instance on in later revision
-            _ = Scripts.TMCHandler.Instance;
         }
 
         /// <summary>
