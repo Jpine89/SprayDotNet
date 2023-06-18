@@ -26,8 +26,7 @@ namespace PSpray.Client.Scripts
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
 
-        private dynamic _frameWorkEntity;
-        TmcWrapper TmcWrapper;
+        private TmcWrapper TmcWrapper;
         private SprayTagHandler()
         {
             Init();
@@ -64,6 +63,7 @@ namespace PSpray.Client.Scripts
             Main.Instance.EventHandlerDictionary.Add("pspray:Scale_Spray", new Action<float>(SprayScale));
             Main.Instance.EventHandlerDictionary.Add("pspray:Font_Spray", new Action<int>(SprayFont));
             Main.Instance.EventHandlerDictionary.Add("pspray:End_Spray", new Action(EndSprayCam));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Color_Spray", new Action<string>(SprayColor));
         }
 
         private void SetupRegisterCommands()
@@ -232,7 +232,7 @@ namespace PSpray.Client.Scripts
             DisableControlAction(0, (int)Control.Attack, true);
             if (Game.IsDisabledControlJustReleased(0, Control.Attack))
             {
-                TmcWrapper.CreateMenu(_tempSpray.Text, FontHandler.Instance.returnList());
+                TmcWrapper.CreateSideMenu(_tempSpray.Text, FontHandler.Instance.returnList());
             }
 
             if (Game.IsControlJustPressed(0, Control.Aim))
@@ -244,6 +244,7 @@ namespace PSpray.Client.Scripts
         private void SprayText(string newText) => _tempSpray.Text = newText;
         private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
         private void SprayScale(float newScale) => _tempSpray.ScaleSet(newScale);
+        private void SprayColor(string newColor) => _tempSpray.Color = newColor;
 
         private void SaveSpray()
         {
