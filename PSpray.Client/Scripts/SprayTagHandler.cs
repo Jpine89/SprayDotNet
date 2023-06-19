@@ -147,10 +147,22 @@ namespace PSpray.Client.Scripts
             }
         }
 
+        /// <summary>
+        /// Called by EventHandle to trigger creating a new Spray
+        /// </summary>
+        /// <returns></returns>
         private void InitSpray()
         {
-            CreateNewSpray("Spray Location");
-            TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
+            try
+            {
+                CreateNewSpray("Spray Location");
+                TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
+            }
+            catch
+            {
+
+            }
+
         }
 
         /// <summary>
