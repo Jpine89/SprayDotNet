@@ -26,7 +26,7 @@ namespace PSpray.Client.Scripts
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
 
-        private TmcWrapper TmcWrapper;
+        //private TmcWrapper TmcWrapper;
         private SprayTagHandler()
         {
             Init();
@@ -46,8 +46,8 @@ namespace PSpray.Client.Scripts
 
         private async void Init()
         {
-            TmcWrapper = new TmcWrapper();
-            EntityFrameWork();
+            //TmcWrapper = new TmcWrapper();
+            FrameWork();
             await LoadScaleFormsAsync();
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             SetupEventHandler();
@@ -76,9 +76,9 @@ namespace PSpray.Client.Scripts
         /// the scripts. 
         /// To do this, you need a custom Wrapper similiar to TmcWrapper. 
         /// </summary>
-        private void EntityFrameWork()
+        private void FrameWork()
         {
-            TmcWrapper.TMC = Main.Instance._ExportDictionary["core"].getCoreObject();
+            //TmcWrapper.TMC = Main.Instance._ExportDictionary["core"].getCoreObject();
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace PSpray.Client.Scripts
             try
             {
                 CreateNewSpray("Spray Location");
-                TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
+                //TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
             }
             catch
             {
@@ -244,7 +244,8 @@ namespace PSpray.Client.Scripts
             DisableControlAction(0, (int)Control.Attack, true);
             if (Game.IsDisabledControlJustReleased(0, Control.Attack))
             {
-                TmcWrapper.CreateSideMenu(_tempSpray.Text, FontHandler.Instance.returnList());
+                //TmcWrapper.CreateSideMenu(_tempSpray.Text, FontHandler.Instance.returnList());
+                //Create new NUI
             }
 
             if (Game.IsControlJustPressed(0, Control.Aim))
@@ -284,7 +285,7 @@ namespace PSpray.Client.Scripts
             Main.Instance.DetachTick(SetSprayPositionAsync);
         }
 
-        #region Helper Functions
+        #region RayCast Functions
         private void RayCastGamePlayCamera(ref Vector3 endPoint, ref Vector3 rotation)
         {
 

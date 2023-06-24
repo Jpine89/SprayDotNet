@@ -13,7 +13,7 @@
         {
             Instance = this;
             InitialiseScripts();
-
+            //GetClosestObjectOfType
             Debug.WriteLine("^2PSpray.Client has been initialised.");
         }
 

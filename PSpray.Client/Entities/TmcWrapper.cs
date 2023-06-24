@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace PSpray.Client.Entities
 {
+    /// <summary>
+    /// Warpper class for the TMC Framework,
+    /// Can be used as a reference for other Frameworks on what Events to call.
+    /// </summary>
     internal class TmcWrapper
     {
         private dynamic _dynamic;
