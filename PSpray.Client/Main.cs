@@ -21,6 +21,7 @@
         {
             _ = Scripts.FontHandler.Instance;
             _ = Scripts.SprayTagHandler.Instance;
+            _ = Scripts.DefaultMenuHandler.Instance;
         }
 
         /// <summary>

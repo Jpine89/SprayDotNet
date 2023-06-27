@@ -16,7 +16,7 @@ namespace PSpray.Client.Scripts
         private Dictionary<int, Scaleform> _scaleforms = new();
         private const string SCALEFORM_NAME = "PLAYER_NAME_"; // PLAYER_NAME_01 - PLAYER_NAME_15 are the scaleforms used for the spray text.
 
-        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 14; // 15th scaleform PLAYER_NAME_15 is the private spray scaleform.
+        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 13; // 15th scaleform PLAYER_NAME_15 is the private spray scaleform. -- 6/26 (14 doesnt work, made switch to 13)
         private const int SCALEFORM_MAX_SCREEN = 12; // 13th scaleform PLAYER_NAME_13 is the max screen scaleform.
         private const float SCALEFORM_MAX_DISTANCE = 25f; // 25m is the max distance for the max screen scaleform.
 
@@ -26,6 +26,8 @@ namespace PSpray.Client.Scripts
         private Vector3 _sprayFinalRotation { get; set; }
         private int _camera;
 
+
+        private bool MenuIsActive = false;
         //private TmcWrapper TmcWrapper;
         private SprayTagHandler()
         {
@@ -47,12 +49,13 @@ namespace PSpray.Client.Scripts
         private async void Init()
         {
             //TmcWrapper = new TmcWrapper();
+            Debug.WriteLine("Staring Init for PSpray");
             FrameWork();
             await LoadScaleFormsAsync();
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             SetupEventHandler();
             SetupRegisterCommands();
-
+            Debug.WriteLine("Ending Init for PSpray");
         }
 
         private void SetupEventHandler()
@@ -66,8 +69,10 @@ namespace PSpray.Client.Scripts
             Main.Instance.EventHandlerDictionary.Add("pspray:Color_Spray", new Action<string>(SprayColor));
         }
 
+
         private void SetupRegisterCommands()
         {
+            Debug.WriteLine("commands loaded");
             RegisterCommand("pspray", new Action(InitSpray), false);
         }
 
@@ -75,12 +80,15 @@ namespace PSpray.Client.Scripts
         /// This Function job is to allow for other types of Frameworks to hook into
         /// the scripts. 
         /// To do this, you need a custom Wrapper similiar to TmcWrapper. 
+        /// 
+        /// TODO: Rewrite to take in custom frameworks.
         /// </summary>
         private void FrameWork()
         {
             //TmcWrapper.TMC = Main.Instance._ExportDictionary["core"].getCoreObject();
         }
 
+#region Tasks
         /// <summary>
         /// Creates all the Scaleforms which will be used for the spray text.
         /// </summary>
@@ -89,15 +97,20 @@ namespace PSpray.Client.Scripts
         {
             // 1 - 15 are what matches the PLAYER_NAME Scaleforms in the game.
             // TODO: Create own scaleform files for the spray text.
-            for (int i = 0; i < 15; i++)
+            Debug.WriteLine("Before Loop");
+            for (int i = 0; i < 14; i++)
             {
+                Debug.WriteLine($"{i} -- In Loop Loop");
                 Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i + 1:00}");
                 while (!scaleform.IsLoaded)
                 {
+                    //Debug.WriteLine($"{i} --Im in the while loop");
                     await BaseScript.Delay(5);
                 }
+                Debug.WriteLine($"{i} -- ScaleForm loaded");
                 _scaleforms.Add(i, scaleform);
             }
+            Debug.WriteLine("out of loop");
             Debug.WriteLine($"^2All {_scaleforms.Count} Scaleforms have been loaded.");
             // All scaleforms are loaded
         }
@@ -146,6 +159,8 @@ namespace PSpray.Client.Scripts
                 spray.Draw();
             }
         }
+#endregion
+
 
         /// <summary>
         /// Called by EventHandle to trigger creating a new Spray
@@ -155,7 +170,8 @@ namespace PSpray.Client.Scripts
         {
             try
             {
-                CreateNewSpray("Spray Location");
+                Debug.WriteLine("Command Called");
+                CreateSpray("Spray Location");
                 //TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
             }
             catch
@@ -166,7 +182,7 @@ namespace PSpray.Client.Scripts
         }
 
         /// <summary>
-        /// Called when the player uses the /spray command.
+        /// 
         /// </summary>
         /// <param name="source"></param>
         /// <param name="arguments"></param>
@@ -181,7 +197,7 @@ namespace PSpray.Client.Scripts
                     sprayText = arguments[0].ToString();
                 }
 
-                CreateNewSpray(sprayText);
+                CreateSpray(sprayText);
             }
             catch (Exception ex)
             {
@@ -190,21 +206,26 @@ namespace PSpray.Client.Scripts
             }
         }
 
-        private void CreateNewSpray(string sprayTag)
+        private void CreateSpray(string sprayTag)
         {
+            Debug.WriteLine("Inside Spray");
             // Create the temporary spray
             if (_tempSpray == null || _tempSpray?.Scaleform is null)
             {
                 _tempSpray = new SprayTag();
             }
 
+            Debug.WriteLine("Temp Spray initialized");
+
             // Set the spray initial information (font, color, text)
             _tempSpray.Text = sprayTag;
             _tempSpray.Font = FontHandler.Instance.GetRandomFont();
             _tempSpray.Color = $"#{Main.Random.Next(0x1000000):X6}"; // Random color
 
+
+            Debug.WriteLine("Temp Spray has basic setup");
             // Set the spray scaleform to the private spray scaleform
-            _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
+            _tempSpray.Scaleform = _scaleforms[13];
 
             // Check if the camera exists, if it does then destroy it
             if (DoesCamExist(_camera))
@@ -212,6 +233,8 @@ namespace PSpray.Client.Scripts
 
             // Create the camera
             _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
+            Debug.WriteLine("Camerea Created");
+
 
             // Start the tick event
             Main.Instance.AttachTick(SetSprayPositionAsync);
@@ -223,6 +246,8 @@ namespace PSpray.Client.Scripts
         {
             Vector3 coords = new();
             Vector3 rotation = new();
+
+            Debug.WriteLine("Inside Spray Position Start");
 
             RayCastGamePlayCamera(ref coords, ref rotation);
 
@@ -242,10 +267,14 @@ namespace PSpray.Client.Scripts
 
             // Check if the player has pressed the accept button (Enter)
             DisableControlAction(0, (int)Control.Attack, true);
-            if (Game.IsDisabledControlJustReleased(0, Control.Attack))
+            if (Game.IsDisabledControlJustReleased(0, Control.Attack) && !MenuIsActive)
             {
                 //TmcWrapper.CreateSideMenu(_tempSpray.Text, FontHandler.Instance.returnList());
                 //Create new NUI
+                MenuIsActive = true;
+                if (true) BaseScript.TriggerEvent("pspray:Default_Menu_Trigger");
+
+                //Users that want their own Custom Interface, can create an EventHandler in their own script. 
             }
 
             if (Game.IsControlJustPressed(0, Control.Aim))
@@ -277,11 +306,14 @@ namespace PSpray.Client.Scripts
                 DestroyCam(_camera, false);
 
             // Remove the tick event
+            MenuIsActive = false;
             Main.Instance.DetachTick(SetSprayPositionAsync);
         }
 
         private void EndSprayCam()
         {
+
+            MenuIsActive = false;
             Main.Instance.DetachTick(SetSprayPositionAsync);
         }
 
