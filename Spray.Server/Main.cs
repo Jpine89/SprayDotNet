@@ -7,7 +7,7 @@ namespace Spray.Server
     {
         public Main()
         {
-            //GetConvar("mysql_connection_string", null);
+
         }
     }
 }
