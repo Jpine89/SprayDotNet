@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSpray.Client", "PSpray.Client\PSpray.Client.csproj", "{21931C4E-5BD0-4B05-B221-BE11513B548A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSpray.Server", "PSpray.Server\PSpray.Server.csproj", "{8DC6F7D4-2999-49FF-83CD-780EFC0344E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSpray.Server", "PSpray.Server\PSpray.Server.csproj", "{8DC6F7D4-2999-49FF-83CD-780EFC0344E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
