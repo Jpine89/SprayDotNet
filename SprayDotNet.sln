@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Spray.Server", "Spray.Server\Spray.Server.csproj", "{FEEF7EE3-481A-40AF-81B1-2250193C76C7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSpray.Client", "PSpray.Client\PSpray.Client.csproj", "{21931C4E-5BD0-4B05-B221-BE11513B548A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSpray.Client", "PSpray.Client\PSpray.Client.csproj", "{21931C4E-5BD0-4B05-B221-BE11513B548A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,10 +11,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FEEF7EE3-481A-40AF-81B1-2250193C76C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FEEF7EE3-481A-40AF-81B1-2250193C76C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FEEF7EE3-481A-40AF-81B1-2250193C76C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FEEF7EE3-481A-40AF-81B1-2250193C76C7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{21931C4E-5BD0-4B05-B221-BE11513B548A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{21931C4E-5BD0-4B05-B221-BE11513B548A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21931C4E-5BD0-4B05-B221-BE11513B548A}.Release|Any CPU.ActiveCfg = Release|Any CPU
