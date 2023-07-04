@@ -16,8 +16,8 @@ namespace PSpray.Client.Scripts
         private Dictionary<int, Scaleform> _scaleforms = new();
         private const string SCALEFORM_NAME = "PLAYER_NAME_"; // PLAYER_NAME_01 - PLAYER_NAME_15 are the scaleforms used for the spray text.
 
-        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 13; // 15th scaleform PLAYER_NAME_15 is the private spray scaleform. -- 6/26 (14 doesnt work, made switch to 13)
-        private const int SCALEFORM_MAX_SCREEN = 12; // 13th scaleform PLAYER_NAME_13 is the max screen scaleform.
+        private const int PRIVATE_SPRAY_SCALEFORM_KEY = 11; // 15th scaleform PLAYER_NAME_15 is the private spray scaleform. -- 6/26 (14 doesnt work, made switch to 13, 7/4 13 doesnt work, switched to 11..)
+        private const int SCALEFORM_MAX_SCREEN = 10; // 13th scaleform PLAYER_NAME_13 is the max screen scaleform (7/4 changed to load 10 max).
         private const float SCALEFORM_MAX_DISTANCE = 25f; // 25m is the max distance for the max screen scaleform.
 
         private const float FORWARD_OFFSET = 0.015f;
@@ -49,13 +49,13 @@ namespace PSpray.Client.Scripts
         private async void Init()
         {
             //TmcWrapper = new TmcWrapper();
-            Debug.WriteLine("Staring Init for PSpray");
+            //Debug.WriteLine("Staring Init for PSpray");
             FrameWork();
             await LoadScaleFormsAsync();
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             SetupEventHandler();
             SetupRegisterCommands();
-            Debug.WriteLine("Ending Init for PSpray");
+            //Debug.WriteLine("Ending Init for PSpray");
         }
 
         private void SetupEventHandler()
@@ -97,22 +97,34 @@ namespace PSpray.Client.Scripts
         {
             // 1 - 15 are what matches the PLAYER_NAME Scaleforms in the game.
             // TODO: Create own scaleform files for the spray text.
-            Debug.WriteLine("Before Loop");
-            for (int i = 0; i < 14; i++)
+            try
             {
-                Debug.WriteLine($"{i} -- In Loop Loop");
-                Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i + 1:00}");
-                while (!scaleform.IsLoaded)
+                int breakCounter = 0;
+                for (int i = 0; i < 15; i++)
                 {
-                    //Debug.WriteLine($"{i} --Im in the while loop");
-                    await BaseScript.Delay(5);
+                    Debug.WriteLine($"{i} -- Being loaded");
+                    Scaleform scaleform = new Scaleform($"{SCALEFORM_NAME}{i + 1:00}");
+                    while (!scaleform.IsLoaded)
+                    {
+                        if (breakCounter == 100) throw new Exception($"{i} -- Failed to load");
+                        await BaseScript.Delay(5);
+                        breakCounter++;
+                    }
+                    Debug.WriteLine($"{i} -- ScaleForm loaded");
+                    _scaleforms.Add(i, scaleform);
                 }
-                Debug.WriteLine($"{i} -- ScaleForm loaded");
-                _scaleforms.Add(i, scaleform);
             }
-            Debug.WriteLine("out of loop");
-            Debug.WriteLine($"^2All {_scaleforms.Count} Scaleforms have been loaded.");
-            // All scaleforms are loaded
+            catch(Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+            finally
+            {
+                Debug.WriteLine($"^2All {_scaleforms.Count} Scaleforms have been loaded.");
+                // All scaleforms are loaded
+            }
+
+
         }
 
         /// <summary>
@@ -170,7 +182,7 @@ namespace PSpray.Client.Scripts
         {
             try
             {
-                Debug.WriteLine("Command Called");
+                //Debug.WriteLine("Command Called");
                 CreateSpray("Spray Location");
                 //TmcWrapper.SimpleNotify("Left Click to Set Locations, Right Click to Cancel", 10000);
             }
@@ -189,6 +201,7 @@ namespace PSpray.Client.Scripts
         /// <param name="raw"></param>
         public void OnSprayCommand(int source, List<object> arguments, string raw)
         {
+            GetPlayerPed(source);
             try
             {
                 string sprayText = $"Spray Template {_sprays.Count}";
@@ -225,7 +238,7 @@ namespace PSpray.Client.Scripts
 
             Debug.WriteLine("Temp Spray has basic setup");
             // Set the spray scaleform to the private spray scaleform
-            _tempSpray.Scaleform = _scaleforms[13];
+            _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
 
             // Check if the camera exists, if it does then destroy it
             if (DoesCamExist(_camera))
@@ -247,7 +260,7 @@ namespace PSpray.Client.Scripts
             Vector3 coords = new();
             Vector3 rotation = new();
 
-            Debug.WriteLine("Inside Spray Position Start");
+            Debug.WriteLine("Inside Spray Position Start: " + MenuIsActive);
 
             RayCastGamePlayCamera(ref coords, ref rotation);
 

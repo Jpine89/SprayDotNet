@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PSpray.Server
+namespace PSpray.Server.Utils
 {
     class Database
     {
