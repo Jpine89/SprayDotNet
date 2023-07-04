@@ -305,6 +305,7 @@ namespace PSpray.Client.Scripts
         {
             // Add the spray to the list
             _sprays.Add(_tempSpray);
+            BaseScript.TriggerServerEvent("pspray:add_spray", "test", "test2");
 
             if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
             {

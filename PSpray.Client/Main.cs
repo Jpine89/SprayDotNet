@@ -13,11 +13,6 @@
         {
             Instance = this;
             InitialiseScripts();
-            //GetClosestObjectOfType
-            Debug.WriteLine("^2PSpray.Client has been initialised.");
-            TriggerServerEvent("pspray:add_spray", "test", "test2");
-            var test = GetPlayerPed(-1);
-            Debug.WriteLine("Get player Index: " + NetworkGetPlayerIndexFromPed(test));
         }
 
         private void InitialiseScripts()

@@ -15,20 +15,12 @@ namespace PSpray.Client.Scripts
     {
         private static readonly object _padlock = new();
         private static DefaultMenuHandler _instance;
-
-        private bool enabled = true;
-        private string dish = "Banana";
-        private TimerBarPool _timerBarPool;
         private long txd;
-        private Random Random = new Random(API.GetGameTimer());
-
-        private bool isVisible = false;
-
         private List<AddonFont> _font;
+
         private DefaultMenuHandler()
         {
             Init();
-            _font = FontHandler.Instance.returnList();
             Debug.WriteLine("^2PSpray Default Menu Handler has been initialised.");
         }
 
@@ -47,6 +39,7 @@ namespace PSpray.Client.Scripts
         {
             SetupEventHandler();
             SetupRegisterCommands();
+            _font = FontHandler.Instance.returnList();
         }
 
         private void SetupEventHandler()
@@ -59,30 +52,14 @@ namespace PSpray.Client.Scripts
         {
 
         }
-
-        private void CloseMenu()
-        {
-            isVisible = false;
-            //TestMenu();
-            //Main.Instance.DetachTick(TestMenu);
-        }
-
         private void DefaultMenuTrigger()
         {
-           
             txd = API.CreateRuntimeTxd("scaleformui");
-            isVisible = true;
-            // We create a marker on the peds position, adds it to the MarkerHandler
-            //Marker playerMarker = new Marker(MarkerType.VerticalCylinder, Game.PlayerPed.Position, new Vector3(1.5f), 5f, Colors.Cyan, true);
-            //MarkersHandler.AddMarker(playerMarker);
             DefaultMenu();
-            //Main.Instance.AttachTick(TestMenu);
         }
 
         public async Task DefaultMenu()
         {
-            //_timerBarPool.Draw();
-
             long _titledui = API.CreateDui("https://i.imgur.com/3yrFYbF.gif", 288, 130);
             API.CreateRuntimeTextureFromDuiHandle(txd, "bannerbackground", API.GetDuiHandle(_titledui));
 
@@ -170,7 +147,7 @@ namespace PSpray.Client.Scripts
             };
 
 
-            exampleMenu.Visible = isVisible;
+            exampleMenu.Visible = true;
         }
 
     }
