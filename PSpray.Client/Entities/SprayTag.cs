@@ -10,6 +10,8 @@
         private float _y;
         private float _z;
 
+        public int Id { get; set; }
+
         public Scaleform Scaleform
         {
             get => _scaleform;

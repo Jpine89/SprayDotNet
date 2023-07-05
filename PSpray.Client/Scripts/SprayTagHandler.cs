@@ -78,6 +78,7 @@ namespace PSpray.Client.Scripts
         private void SetupRegisterCommands()
         {
             RegisterCommand("pspray", new Action(InitSpray), false);
+            RegisterCommand("RemovePspray", new Action(RemoveSpray), false);
         }
 
         /// <summary>
@@ -92,7 +93,7 @@ namespace PSpray.Client.Scripts
             //TmcWrapper.TMC = Main.Instance._ExportDictionary["core"].getCoreObject();
         }
 
-#region Tasks
+        #region Tasks
         /// <summary>
         /// Creates all the Scaleforms which will be used for the spray text.
         /// </summary>
@@ -114,12 +115,12 @@ namespace PSpray.Client.Scripts
                         await BaseScript.Delay(5);
                         breakCounter++;
                     }
-                    
+
                     Debug.WriteLine($"{i} -- ScaleForm loaded -- " + $"{SCALEFORM_NAME}{i + 1:00}");
                     _scaleforms.Add(i, scaleform);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
             }
@@ -136,14 +137,14 @@ namespace PSpray.Client.Scripts
         /// Gets the sprays in range of the player, and orders them by distance.
         /// </summary>
         /// <returns></returns>
-        #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        private async Task SpraysInRangeAsync()
-        #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        private async Task SpraysInRangeAsync(bool ignorePlayerPos = false)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Vector3 playerPos = Game.PlayerPed.Position;
 
             // TODO: Need to allow an update if a new SprayTag is added in range.
-            if (Vector3.Distance(playerPos, _previousDistance) < 10f && _spraysInRange.Count > 0)
+            if (Vector3.Distance(playerPos, _previousDistance) < 10f && _spraysInRange.Count > 0 && !ignorePlayerPos)
             {
                 return;
             }
@@ -176,7 +177,7 @@ namespace PSpray.Client.Scripts
                 spray.Draw();
             }
         }
-#endregion
+        #endregion
 
 
         /// <summary>
@@ -258,9 +259,9 @@ namespace PSpray.Client.Scripts
             Main.Instance.AttachTick(SetSprayPositionAsync);
         }
 
-        #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task SetSprayPositionAsync()
-        #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             Vector3 coords = new();
             Vector3 rotation = new();
@@ -270,10 +271,10 @@ namespace PSpray.Client.Scripts
             RayCastGamePlayCamera(ref coords, ref rotation);
 
 
-            #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             // No need to await this, but it needs to be async to update the _sprayFinalRotation
             RunCameraMethodAsync(coords, rotation);
-            #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             coords += (rotation * FORWARD_OFFSET);
 
             // update the spray position and rotation
@@ -302,7 +303,7 @@ namespace PSpray.Client.Scripts
         }
 
 
-        private void ListSpray(string listSpray) => _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray);
+        private void ListSpray(string listSpray){ Debug.WriteLine(listSpray); _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray); SpraysInRangeAsync(true); }
 
         private void SprayText(string newText) => _tempSpray.Text = newText;
         private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
@@ -332,6 +333,25 @@ namespace PSpray.Client.Scripts
             // Remove the tick event
             MenuIsActive = false;
             Main.Instance.DetachTick(SetSprayPositionAsync);
+        }
+
+        private void RemoveSpray()
+        {
+            //Remove it from List first
+            Vector3 playerPos = Game.PlayerPed.Position;
+            SpraysInRangeAsync(true);
+            if (Vector3.Distance(playerPos, _spraysInRange[0].Location) < 3f)
+            {
+                string jsonSprayToRemove = JsonConvert.SerializeObject(_spraysInRange[0]);
+                BaseScript.TriggerServerEvent("pspray:remove_sprays", jsonSprayToRemove);
+            }
+            else
+            {
+                Debug.WriteLine("Not In Range to Delete");
+            }
+
+            //Then send Server Tick to remove from DB
+            //Have server reupdate the list and send to players.
         }
 
         private void EndSprayCam()

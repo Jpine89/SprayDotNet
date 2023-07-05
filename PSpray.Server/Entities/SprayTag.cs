@@ -5,6 +5,7 @@ namespace PSpray.Server.Entities
 {
     class SprayTag
     {
+        public int Id { get; set; }
         public Vector3 Location { get; set; }
         public Vector3 Rotation { get; set; }
         public Vector3 Scale { get; set; }

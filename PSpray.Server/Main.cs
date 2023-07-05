@@ -15,9 +15,10 @@ namespace PSpray.Server
         public Main()
         {
             EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
+            EventHandlers["pspray:remove_sprays"] += new Action<Player, string>(RemoveSpray);
             EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
             PSprayDbInitialize();
-            Debug.WriteLine("Server Init");
+            Debug.WriteLine("PServer Init");
         }
 
         private async Task PSprayDbInitialize()
@@ -49,13 +50,30 @@ namespace PSpray.Server
 
             using (var connection = Database.GetConnection())
             {
-                int rowsAffected = await connection.ExecuteAsync(Queries.insertPSprayTable, parameters);
+                int rowsAffected = await connection.ExecuteAsync(Queries.insertPSprayToTable, parameters);
                 Debug.WriteLine($"Player Init rowsAffected: {rowsAffected}");
             }
 
             GetSprays();
         }
 
+        private async void RemoveSpray([FromSource] Player source, string obj)
+        {
+            //Debug.WriteLine(obj);
+            SprayTag spray = JsonConvert.DeserializeObject<SprayTag>(obj);
+            
+            var parameters = new
+            {
+                Id = spray.Id
+            };
+            using (var connection = Database.GetConnection())
+            {
+                int rowsAffected = await connection.ExecuteAsync(Queries.removePSprayFromTable, parameters);
+                Debug.WriteLine($"Player Init rowsAffected: {rowsAffected}");
+            }
+
+            GetSprays();
+        }
 
         private async void GetSprays()
         {
@@ -63,12 +81,13 @@ namespace PSpray.Server
             float scaleTemp;
             using (var connection = Database.GetConnection())
             {
-                var reader = connection.ExecuteReader(Queries.getPSprayTable);
+                var reader = connection.ExecuteReader(Queries.getPSprayFromTable);
                 while (reader.Read())
                 {
                     scaleTemp = 2f + (int)reader[8];
                     sprays.Add(new SprayTag()
                     {
+                        Id = (int)reader[0],
                         Location = new Vector3((float)reader[2], (float)reader[3], (float)reader[4]),
                         Rotation = new Vector3((float)reader[5], (float)reader[6], (float)reader[7]),
                         Scale = new Vector3(scaleTemp, scaleTemp, 0),

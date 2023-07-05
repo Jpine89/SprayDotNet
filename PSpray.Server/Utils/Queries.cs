@@ -23,13 +23,18 @@ namespace PSpray.Server.Utils
                 PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
-        public static string insertPSprayTable = @"
+
+
+        public static string getPSprayFromTable = @"
+            SELECT * FROM `pspray` WHERE deleted = 0;
+        ";
+
+        public static string insertPSprayToTable = @"
             INSERT IGNORE INTO `pspray` (identifier, locx, locy, locz, rotx, roty, rotz, scale, color, text, font)
             VALUES (@Identifier, @Locx, @Locy, @Locz, @Rotx, @Roty, @Rotz, @Scale, @Color, @Text, @Font)
         ";
 
-        public static string getPSprayTable = @"
-            SELECT * FROM `pspray`;
-        ";
+        public static string removePSprayFromTable = @"UPDATE `pspray`SET deleted = 1 WHERE id = @Id";
+
     }
 }
