@@ -1,4 +1,5 @@
-﻿using PSpray.Client.Entities;
+﻿using Newtonsoft.Json;
+using PSpray.Client.Entities;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -55,12 +56,16 @@ namespace PSpray.Client.Scripts
             Main.Instance.AttachTick(DrawSpraysInRangeAsync);
             SetupEventHandler();
             SetupRegisterCommands();
-            //Debug.WriteLine("Ending Init for PSpray");
+
+            BaseScript.TriggerServerEvent("pspray:get_sprays");
         }
 
         private void SetupEventHandler()
         {
             Main.Instance.EventHandlerDictionary.Add("pspray:Init_Spray", new Action(InitSpray));
+
+            Main.Instance.EventHandlerDictionary.Add("pspray:List_Spray", new Action<string>(ListSpray));
+
             Main.Instance.EventHandlerDictionary.Add("pspray:Save_Spray", new Action(SaveSpray));
             Main.Instance.EventHandlerDictionary.Add("pspray:Text_Spray", new Action<string>(SprayText));
             Main.Instance.EventHandlerDictionary.Add("pspray:Scale_Spray", new Action<float>(SprayScale));
@@ -72,7 +77,6 @@ namespace PSpray.Client.Scripts
 
         private void SetupRegisterCommands()
         {
-            Debug.WriteLine("commands loaded");
             RegisterCommand("pspray", new Action(InitSpray), false);
         }
 
@@ -110,7 +114,8 @@ namespace PSpray.Client.Scripts
                         await BaseScript.Delay(5);
                         breakCounter++;
                     }
-                    Debug.WriteLine($"{i} -- ScaleForm loaded");
+                    
+                    Debug.WriteLine($"{i} -- ScaleForm loaded -- " + $"{SCALEFORM_NAME}{i + 1:00}");
                     _scaleforms.Add(i, scaleform);
                 }
             }
@@ -296,16 +301,21 @@ namespace PSpray.Client.Scripts
             }
         }
 
+
+        private void ListSpray(string listSpray) => _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray);
+
         private void SprayText(string newText) => _tempSpray.Text = newText;
         private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
         private void SprayScale(float newScale) => _tempSpray.ScaleSet(newScale);
         private void SprayColor(string newColor) => _tempSpray.Color = newColor;
 
+
         private void SaveSpray()
         {
             // Add the spray to the list
-            _sprays.Add(_tempSpray);
-            BaseScript.TriggerServerEvent("pspray:add_spray", "test", "test2");
+            //_sprays.Add(_tempSpray);
+            string changeValue = JsonConvert.SerializeObject(_tempSpray);
+            BaseScript.TriggerServerEvent("pspray:add_spray", changeValue);
 
             if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
             {
@@ -326,7 +336,6 @@ namespace PSpray.Client.Scripts
 
         private void EndSprayCam()
         {
-
             MenuIsActive = false;
             Main.Instance.DetachTick(SetSprayPositionAsync);
         }

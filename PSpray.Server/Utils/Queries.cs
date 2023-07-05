@@ -20,9 +20,16 @@ namespace PSpray.Server.Utils
                 `color` varchar(128),
                 `text` varchar(256),
                 `font` varchar(128),
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `identifier` (`identifier`)
+                PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
+        public static string insertPSprayTable = @"
+            INSERT IGNORE INTO `pspray` (identifier, locx, locy, locz, rotx, roty, rotz, scale, color, text, font)
+            VALUES (@Identifier, @Locx, @Locy, @Locz, @Rotx, @Roty, @Rotz, @Scale, @Color, @Text, @Font)
+        ";
+
+        public static string getPSprayTable = @"
+            SELECT * FROM `pspray`;
+        ";
     }
 }

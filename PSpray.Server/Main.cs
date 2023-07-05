@@ -1,10 +1,11 @@
 ﻿using CitizenFX.Core;
-using static CitizenFX.Core.Native.API;
 using Dapper;
 using PSpray.Server.Utils;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using PSpray.Server.Entities;
+using Newtonsoft.Json;
 
 namespace PSpray.Server
 {
@@ -13,20 +14,13 @@ namespace PSpray.Server
         Dictionary<string, string> playerList = new Dictionary<string, string>(); 
         public Main()
         {
-            EventHandlers["init_player"] += new Action<Player>(InitPlayer);
-            EventHandlers["pspray:add_spray"] += new Action<Player, string, string>(AddSpray);
-
+            EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
+            EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
+            PSprayDbInitialize();
             Debug.WriteLine("Server Init");
-            
-            //initConnectAsync();
         }
 
-        //private async Task TestDapper()
-        //{
-        //    DynamicParameters test = new DynamicParameters();
-        //}
-
-        private async Task initConnectAsync()
+        private async Task PSprayDbInitialize()
         {
             using (var connection = Database.GetConnection())
             {
@@ -35,23 +29,61 @@ namespace PSpray.Server
             }
         }
 
-        private async void AddSpray([FromSource] Player source, string test, string test2)
+        private async void AddSpray([FromSource] Player source, string obj)
         {
-            Debug.WriteLine("AddSpray worked?");
+            Debug.WriteLine(obj);
+            SprayTag spray = JsonConvert.DeserializeObject<SprayTag>(obj);
+            var parameters = new { 
+                Identifier = source.Identifiers["license"], 
+                Locx = spray.Location.X, 
+                Locy = spray.Location.Y, 
+                Locz = spray.Location.Z,
+                Rotx = spray.Rotation.X, 
+                Roty = spray.Rotation.Y, 
+                Rotz = spray.Rotation.Z,
+                Scale = spray.Scale.X - 2f,
+                spray.Color,
+                spray.Text,
+                spray.Font
+            };
+
+            using (var connection = Database.GetConnection())
+            {
+                int rowsAffected = await connection.ExecuteAsync(Queries.insertPSprayTable, parameters);
+                Debug.WriteLine($"Player Init rowsAffected: {rowsAffected}");
+            }
+
+            GetSprays();
         }
 
-        private async void InitPlayer([FromSource] Player source)
+
+        private async void GetSprays()
         {
-            //GetPlayerIdentifier("test", 1);
-            Debug.WriteLine("Calling Init Player!");
-            Debug.WriteLine("Player Ped: " + source.Character.NetworkId);
-            //playerList.Add(source.Name, source.)
-            //var parameters = new { Identifier = source.Identifiers["license"], Money = 5000, XP = 0 };
-            //using (var connection = Database.GetConnection())
-            //{
-            //    int rowsAffected = await connection.ExecuteAsync(Queries.initPlayer, parameters);
-            //    Debug.WriteLine($"Player Init rowsAffected: {rowsAffected}");
-            //}
+            IList<SprayTag> sprays = new List<SprayTag>();
+            float scaleTemp;
+            using (var connection = Database.GetConnection())
+            {
+                var reader = connection.ExecuteReader(Queries.getPSprayTable);
+                while (reader.Read())
+                {
+                    scaleTemp = 2f + (int)reader[8];
+                    sprays.Add(new SprayTag()
+                    {
+                        Location = new Vector3((float)reader[2], (float)reader[3], (float)reader[4]),
+                        Rotation = new Vector3((float)reader[5], (float)reader[6], (float)reader[7]),
+                        Scale = new Vector3(scaleTemp, scaleTemp, 0),
+                        Color = (string)reader[9],
+                        Font = (string)reader[11],
+                        Text = (string)reader[10]
+                    });
+
+                }
+                //Debug.WriteLine($"Player Init rowsAffected: {rowsAffected}");
+            }
+            string jsonSpray = JsonConvert.SerializeObject(sprays);
+            BaseScript.TriggerClientEvent("pspray:List_Spray", jsonSpray);
+            //Debug.WriteLine($"{jsonSpray}");
         }
+
     }
 }

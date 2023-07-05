@@ -50,7 +50,13 @@ namespace PSpray.Client.Scripts
 
         private void SetupRegisterCommands()
         {
+            RegisterCommand("MenuReset", new Action(MenuReset), false);
+        }
 
+        private void MenuReset()
+        {
+            Debug.WriteLine("Command Called");
+            Debug.WriteLine(MenuHandler.IsAnyMenuOpen.ToString());
         }
         private void DefaultMenuTrigger()
         {
@@ -81,6 +87,8 @@ namespace PSpray.Client.Scripts
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left && scaleValue > -.8) scaleValue -= 0.2f;
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Right && scaleValue < 5.8) scaleValue += 0.2f;
+
+                Debug.WriteLine("ScaleValue: " + scaleValue);
 
                 BaseScript.TriggerEvent("pspray:Scale_Spray", scaleValue);
                 return scaleValue.ToString("F3");

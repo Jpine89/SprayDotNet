@@ -23,7 +23,6 @@
                 }
             }
         }
-
         public Vector3 Location { get; set; }
         public Vector3 Rotation { get; set; }
         public Vector3 Scale { get; set; } = new Vector3(2f, 2f, 1f);
