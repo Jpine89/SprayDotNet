@@ -16,11 +16,16 @@ namespace PSpray.Server.Utils
 
         private static string GetConnectionString()
         {
-            string stringReturn = API.GetConvar("mysql_connection_string", null);
-            if (stringReturn == null) Debug.WriteLine("Convars in Config are not set!");
-
-            string actualString = $"Server=localhost; Port=3306; User ID=root; Password=pineapple; Database=QBCoreFramework_A237FE;";
-            return actualString;
+            string MYSQL_HOST = API.GetConvar("MYSQL_HOST", null);
+            string MYSQL_PORT = API.GetConvar("MYSQL_PORT", null);
+            string MYSQL_USER = API.GetConvar("MYSQL_USER", null);
+            string MYSQL_PASS = API.GetConvar("MYSQL_PASS", null);
+            string MYSQL_DB = API.GetConvar("MYSQL_DB", null);
+            if (MYSQL_HOST == null)
+            {
+                Debug.WriteLine("Convars in configruation are not set!");
+            }
+            return $"Server={MYSQL_HOST}; Port={MYSQL_PORT}; User ID={MYSQL_USER}; Password={MYSQL_PASS}; Database={MYSQL_DB}";
         }
     }
 }

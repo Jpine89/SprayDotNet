@@ -63,9 +63,7 @@ namespace PSpray.Client.Scripts
         private void SetupEventHandler()
         {
             Main.Instance.EventHandlerDictionary.Add("pspray:Init_Spray", new Action(InitSpray));
-
             Main.Instance.EventHandlerDictionary.Add("pspray:List_Spray", new Action<string>(ListSpray));
-
             Main.Instance.EventHandlerDictionary.Add("pspray:Save_Spray", new Action(SaveSpray));
             Main.Instance.EventHandlerDictionary.Add("pspray:Text_Spray", new Action<string>(SprayText));
             Main.Instance.EventHandlerDictionary.Add("pspray:Scale_Spray", new Action<float>(SprayScale));
@@ -303,7 +301,10 @@ namespace PSpray.Client.Scripts
         }
 
 
-        private void ListSpray(string listSpray){ Debug.WriteLine(listSpray); _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray); SpraysInRangeAsync(true); }
+        private void ListSpray(string listSpray){ 
+            /*Debug.WriteLine(listSpray);*/ 
+            _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray); 
+            SpraysInRangeAsync(true); }
 
         private void SprayText(string newText) => _tempSpray.Text = newText;
         private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
@@ -313,16 +314,8 @@ namespace PSpray.Client.Scripts
 
         private void SaveSpray()
         {
-            // Add the spray to the list
-            //_sprays.Add(_tempSpray);
             string changeValue = JsonConvert.SerializeObject(_tempSpray);
             BaseScript.TriggerServerEvent("pspray:add_spray", changeValue);
-
-            if (_spraysInRange.Count < SCALEFORM_MAX_SCREEN)
-            {
-                _spraysInRange.Add(_tempSpray);
-            }
-
             // Reset the temp spray
             _tempSpray = null;
 
@@ -349,9 +342,6 @@ namespace PSpray.Client.Scripts
             {
                 Debug.WriteLine("Not In Range to Delete");
             }
-
-            //Then send Server Tick to remove from DB
-            //Have server reupdate the list and send to players.
         }
 
         private void EndSprayCam()
