@@ -14,6 +14,8 @@ namespace PSpray.Server
         Dictionary<string, string> playerList = new Dictionary<string, string>(); 
         public Main()
         {
+            //I'm making a simple change to showcase a Pull Request
+
             EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
             EventHandlers["pspray:remove_sprays"] += new Action<Player, string>(RemoveSpray);
             EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
