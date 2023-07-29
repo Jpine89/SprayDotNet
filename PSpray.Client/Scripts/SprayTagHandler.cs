@@ -29,6 +29,7 @@ namespace PSpray.Client.Scripts
 
 
         private bool MenuIsActive = false;
+        private bool UseDefaultMenu = true;
         //private TmcWrapper TmcWrapper;
         private SprayTagHandler()
         {
@@ -225,7 +226,7 @@ namespace PSpray.Client.Scripts
 
         private void CreateSpray(string sprayTag)
         {
-            Debug.WriteLine("Inside Spray");
+            //Debug.WriteLine("Inside Spray");
             // Create the temporary spray
             if (_tempSpray == null || _tempSpray?.Scaleform is null)
             {
@@ -264,7 +265,7 @@ namespace PSpray.Client.Scripts
             Vector3 coords = new();
             Vector3 rotation = new();
 
-            Debug.WriteLine("Inside Spray Position Start: " + MenuIsActive);
+            //Debug.WriteLine("Inside Spray Position Start: " + MenuIsActive);
 
             RayCastGamePlayCamera(ref coords, ref rotation);
 
@@ -289,7 +290,7 @@ namespace PSpray.Client.Scripts
                 //TmcWrapper.CreateSideMenu(_tempSpray.Text, FontHandler.Instance.returnList());
                 //Create new NUI
                 MenuIsActive = true;
-                if (true) BaseScript.TriggerEvent("pspray:Default_Menu_Trigger");
+                if (UseDefaultMenu) BaseScript.TriggerEvent("pspray:Default_Menu_Trigger");
 
                 //Users that want their own Custom Interface, can create an EventHandler in their own script. 
             }
@@ -307,7 +308,8 @@ namespace PSpray.Client.Scripts
             SpraysInRangeAsync(true); }
 
         private void SprayText(string newText) => _tempSpray.Text = newText;
-        private void SprayFont(int newFont) => _tempSpray.Font = FontHandler.Instance.GetFont(newFont);
+        private void SprayFont(int newFont) { _tempSpray.Font = FontHandler.Instance.GetFont(newFont);  if (UseDefaultMenu) BaseScript.TriggerEvent("pspray:Menu_Font", _tempSpray.Font); }
+        
         private void SprayScale(float newScale) => _tempSpray.ScaleSet(newScale);
         private void SprayColor(string newColor) => _tempSpray.Color = newColor;
 
