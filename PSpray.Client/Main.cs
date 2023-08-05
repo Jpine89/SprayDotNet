@@ -17,9 +17,10 @@
 
         private void InitialiseScripts()
         {
-            _ = Scripts.FontHandler.Instance;
-            _ = Scripts.SprayTagHandler.Instance;
-            _ = Scripts.DefaultMenuHandler.Instance;
+            //_ = Scripts.FontHandler.Instance;
+            //_ = Scripts.SprayTagHandler.Instance;
+            //_ = Scripts.DefaultMenuHandler.Instance;
+            _ = Scripts.TurfHandler.Instance;
         }
 
         /// <summary>
