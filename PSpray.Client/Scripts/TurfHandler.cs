@@ -43,6 +43,7 @@ namespace PSpray.Client.Scripts
         private void SetupRegisterCommands()
         {
             RegisterCommand("PTurf", new Action(PTurfTest), false);
+            RegisterCommand("PDump", new Action(PDumpTest), false);
         }
 
         private void PTurfTest()
@@ -58,6 +59,11 @@ namespace PSpray.Client.Scripts
             Debug.WriteLine($"Your Coords Are: {playerCoords}");
             GetStreetNameAtCoord(playerCoords.X, playerCoords.Y,playerCoords.Z, ref streetName, ref crossingRoad);
             Debug.WriteLine($"(StreetName),(crossingRoad): {streetName},{crossingRoad} ");
+        }
+
+        private void PDumpTest()
+        {
+
         }
     }
 }
