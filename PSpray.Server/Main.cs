@@ -1,4 +1,5 @@
 ﻿using CitizenFX.Core;
+using static CitizenFX.Core.Native.API;
 using Dapper;
 using PSpray.Server.Utils;
 using System;
@@ -11,9 +12,14 @@ namespace PSpray.Server
 {
     class Main : BaseScript
     {
-        Dictionary<string, string> playerList = new Dictionary<string, string>(); 
+        Dictionary<string, string> playerList = new Dictionary<string, string>();
+
+        const string SERVER_CONFIG_LOCATION = $"/client/appsettings.json";
         public Main()
         {
+            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), SERVER_CONFIG_LOCATION);
+            Debug.WriteLine($"serverConfig : {serverConfigFile}");
+
             //EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
             //EventHandlers["pspray:remove_sprays"] += new Action<Player, string>(RemoveSpray);
             //EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
