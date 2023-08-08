@@ -11,20 +11,7 @@ namespace PSpray.Client
         public ExportDictionary _ExportDictionary => Exports;
         public EventHandlerDictionary EventHandlerDictionary => EventHandlers;
 
-        const string CLIENT_CONFIG_LOCATION = $"client/appsettings.json";
-
-        public Main()
-        {
-
-            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
-            Debug.WriteLine($"serverConfig : {serverConfigFile}");
-
-            //dynamic test = JsonConvert.DeserializeObject<dynamic>(serverConfigFile);
-
-            //Debug.WriteLine($"serverConfig : {test.Setting1}");
-
-
-
+        public Main() { 
             Instance = this;
             InitialiseScripts();
         }
