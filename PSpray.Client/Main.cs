@@ -15,6 +15,7 @@
         {
             string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
             Debug.WriteLine($"serverConfig : {serverConfigFile}");
+            //dynamic test = JsonConvert.DeserializeObject<dynamic>(serverConfigFile);
 
             Instance = this;
             InitialiseScripts();
