@@ -140,9 +140,9 @@ namespace PSpray.Client.Scripts
 
             Debug.WriteLine("------------------TEST 1 MOTHERFUCKER----------------------");
 
-            var degrees = GetEntityHeading(obj) + 90 - 180;
+            var degrees = GetEntityHeading(obj) - 90;
             // Reduce the angle to its equivalent angle within 0 to 360 degrees
-            float normalizedDegrees = (degrees + (-1 * rot.Z)) % 360.0f ;
+            float normalizedDegrees = (degrees /*+ (-1 * rot.Z)*/) % 360.0f ;
             Debug.WriteLine($"{normalizedDegrees}");
             var radians = await getRadians(normalizedDegrees);
             float x = (float)Math.Cos(radians) * Objmax.X;
