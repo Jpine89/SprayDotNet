@@ -32,7 +32,7 @@
 			<HintPath>$(PkgNewtonsoft_Json)\lib\portable-net40+sl5+win8+wp8+wpa81\Newtonsoft.Json.dll</HintPath>
 		</Reference>
 		<Reference Include="ScaleformUI">
-		  <HintPath>$(FIVEM_SERVER_PATH)\resources\ScaleformUI\ScaleformUI.dll</HintPath>
+		  <HintPath>..\..\..\..\Desktop\PineappleDevDeploy\resources\ScaleformUI\ScaleformUI.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
