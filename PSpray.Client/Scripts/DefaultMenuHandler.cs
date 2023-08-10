@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ScaleformUI.Elements;
 using CitizenFX.Core.UI;
 using PSpray.Client.Entities;
+using ScaleformUI.Menu;
 
 namespace PSpray.Client.Scripts
 {
