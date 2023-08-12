@@ -90,17 +90,6 @@ namespace PSpray.Client.Scripts
 
             var pedCoord = GetEntityCoords(PlayerPedId(), true);
             Debug.WriteLine($"Ped Coords: {pedCoord}");
-            //behind
-            //Ped Coords: X:-92.22334 Y:-1318.021 Z:29.16628
-
-            //front
-            //Ped Coords: X:-93.6515 Y:-1318.495 Z:29.19033
-
-            //Front Right
-            //Ped Coords: X:-93.6515 Y:-1318.495 Z:29.19033
-
-            //front left
-            //Ped Coords: X:-92.23885 Y:-1316.54 Z:29.15729
             int hash = 0;
             //Use to find the closet dumpster
             foreach (var b in bins) {
@@ -112,60 +101,83 @@ namespace PSpray.Client.Scripts
                 if (obj != 0)
                     break;
             }
-
             //Notes - Back side of Dumpster is considered the face for EntityHeading
             Debug.WriteLine($"Entity Heading: {GetEntityHeading(obj)}"); 
             Debug.WriteLine($"Player Heading: {GetEntityHeading(PlayerPedId())}");
             CreateTurfSpray(obj, hash);
-            //var test = CreateCam("DEFAULT_SCRIPTED_CAMERA", true);
-            //AttachCamToEntity(test, obj, 10f, 10f, 0f, true);
-            //used to geet coords
-            //GetEntityCoords();
+
         }
 
         private async void CreateTurfSpray(int obj, int objHash)
         {
+
+            //Vector3 Objmin = new Vector3();
+            //Vector3 Objmax = new Vector3();
+
+            //GetModelDimensions((uint)objHash, ref Objmin, ref Objmax);
+
+
+            //Debug.WriteLine($"the Obj Dim: {Objmin} || {Objmax}");
+            //Vector3 cords = GetEntityCoords(obj, false);
+            //Vector3 rot = new Vector3() { X = 0, Y = 0, Z=0};
+            //rot = GetEntityRotation(obj, 2);
+            //Debug.WriteLine($"Cords: {cords} and Rot: {rot}");
+
+            //Debug.WriteLine("------------------TEST 1 MOTHERFUCKER----------------------");
+
+            //var degrees = GetEntityHeading(obj) + 180;
+            //float normalizedDegrees = (degrees) % 360f;
+
+            //Debug.WriteLine($"{normalizedDegrees}");
+            //var radians = await getRadians(normalizedDegrees);
+            //float x = (float)Math.Cos(radians);
+            //float y = (float)Math.Sin(radians);
+            //Debug.WriteLine($"For an angle of {radians} radians:");
+            //Debug.WriteLine($"x = {x}");
+            //Debug.WriteLine($"y = {y}");
+            //Debug.WriteLine("------------------TEST 2 MOTHERFUCKER----------------------");
+            //cords.Y = cords.Y - (y * (Objmin.Y));
+            //cords.X = cords.X - (x * (Objmin.X));
+            //cords.Z = cords.Z + 0.8f;
+            ////rot.Z = (-1 * rot.Z);
+
+            //turfSpray.Location = cords;
+            //Debug.WriteLine($"SprayCords : {turfSpray.Location} and SprayRot : {turfSpray.Rotation}");
+            //turfSpray.Rotation = rot;
+
+
             SprayTag turfSpray = new SprayTag();
-            Vector3 Objmin = new Vector3();
-            Vector3 Objmax = new Vector3();
+            var pedCoord = GetEntityCoords(PlayerPedId(), true);
+            //Prop dumpster = World.GetClosest(pedCoord, World.GetAllProps());
+            Entity dumpster = Entity.FromHandle(obj);
+            Vector3 localOffset = new() { X = -0.5f, Y = 0.0f, Z = 0.5f };
 
-            GetModelDimensions((uint)objHash, ref Objmin, ref Objmax);
 
+            Matrix worldMatrix = new(
+                                    dumpster.ForwardVector.X, dumpster.ForwardVector.Y, dumpster.ForwardVector.Z, 0,
+                                    dumpster.RightVector.X, dumpster.RightVector.Y, dumpster.RightVector.Z, 0,
+                                    dumpster.UpVector.X, dumpster.UpVector.Y, dumpster.UpVector.Z, 0,
+                                    dumpster.Position.X, dumpster.Position.Y, dumpster.Position.Z, 1
+                                    );
 
-            Debug.WriteLine($"the Obj Dim: {Objmin} || {Objmax}");
-            Vector3 cords = GetEntityCoords(obj, false);
-            Vector3 rot = new Vector3() { X = 0, Y = 0, Z=0};
-            rot = GetEntityRotation(obj, 2);
-            Debug.WriteLine($"Cords: {cords} and Rot: {rot}");
-
-            Debug.WriteLine("------------------TEST 1 MOTHERFUCKER----------------------");
-
-            var degrees = GetEntityHeading(obj) - 90;
-            // Reduce the angle to its equivalent angle within 0 to 360 degrees
-            float normalizedDegrees = (degrees /*+ (-1 * rot.Z)*/) % 360.0f ;
-            Debug.WriteLine($"{normalizedDegrees}");
-            var radians = await getRadians(normalizedDegrees);
-            float x = (float)Math.Cos(radians) * Objmax.X;
-            float y = (float)Math.Sin(radians) * Objmax.Y;
-            Debug.WriteLine($"For an angle of {radians} radians:");
-            Debug.WriteLine($"x = {x}");
-            Debug.WriteLine($"y = {y}");
-
-            Debug.WriteLine("------------------TEST 2 MOTHERFUCKER----------------------");
-            cords.Y = cords.Y + y;
-            cords.X = cords.X + x;
-            cords.Z = cords.Z + 0.8f;
-            rot.Z = (-1 * rot.Z);
-
-            turfSpray.Location = cords;
-            Debug.WriteLine($"SprayCords : {turfSpray.Location}");
-            turfSpray.Rotation = rot;
+            Vector3 position = Vector3.TransformCoordinate(localOffset, worldMatrix);
+            Debug.WriteLine($"Prop:: {dumpster.Handle}");
+            Debug.WriteLine($"transform Position: {position}");
+            Vector3 rotation = dumpster.Rotation;
+            rotation.Z = -1 * rotation.Z;
+            rotation.X = 0;
+            rotation.Y = 0;
+            Debug.WriteLine($"Rotation:: {rotation}");
+            turfSpray.Location = position;
+            turfSpray.Rotation = rotation;
             SprayTagHandler.Instance.CreateSpray("-----------------------------Gang Turf-----------------------------", true, turfSpray);
         }
 
         private async Task<float> getRadians(float degree)
         {
-            return degree * (float)Math.PI / 4.0f; // Replace with the desired radians value
+
+
+            return degree * (float)Math.PI / 180; // Replace with the desired radians value
         }
     }
 }

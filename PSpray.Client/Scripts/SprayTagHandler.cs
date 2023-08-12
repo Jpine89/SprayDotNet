@@ -170,6 +170,7 @@ namespace PSpray.Client.Scripts
             // foreach spray in range, draw it
             for (int i = 0; i < _spraysInRange.Count; i++)
             {
+                //Debug.WriteLine($"{i}");
                 SprayTag spray = _spraysInRange[i];
                 spray.Scaleform = _scaleforms[i];
                 spray.Draw();
@@ -266,7 +267,8 @@ namespace PSpray.Client.Scripts
 
                 // Reset the temp spray
                 //_tempSpray = null;
-                Main.Instance.AttachTick(TurfTempSprayAsync);
+                SaveSpray();
+                //Main.Instance.AttachTick(TurfTempSprayAsync);
             }
             else
             {
@@ -280,13 +282,15 @@ namespace PSpray.Client.Scripts
         private async Task TurfTempSprayAsync()
         {
             // draw the spray
-            _tempSpray.Draw();
-
+            //_tempSpray.Draw();
+            _spraysInRange.Add(_tempSpray);
             if (Game.IsControlJustPressed(0, Control.Aim))
             {
-                Main.Instance.DetachTick(TurfTempSprayAsync);
+                
+                _spraysInRange.Clear();
                 _tempSpray = null;
             }
+            Main.Instance.DetachTick(TurfTempSprayAsync);
         }
 
 
