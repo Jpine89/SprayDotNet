@@ -146,6 +146,9 @@ namespace PSpray.Client.Scripts
             //turfSpray.Rotation = rot;
 
 
+            /*
+             * Concept Code was Designed with help from @b2soft
+             */
             SprayTag turfSpray = new SprayTag();
             var pedCoord = GetEntityCoords(PlayerPedId(), true);
             //Prop dumpster = World.GetClosest(pedCoord, World.GetAllProps());
