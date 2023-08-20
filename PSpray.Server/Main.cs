@@ -6,19 +6,112 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using PSpray.Server.Entities;
 using Newtonsoft.Json;
+using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Linq;
 
 namespace PSpray.Server
 {
     class Main : BaseScript
     {
-        Dictionary<string, string> playerList = new Dictionary<string, string>(); 
+        Dictionary<string, string> playerList = new Dictionary<string, string>();
+        List<StreetNode> NodesList;
         public Main()
         {
-            EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
-            EventHandlers["pspray:remove_sprays"] += new Action<Player, string>(RemoveSpray);
-            EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
-            PSprayDbInitialize();
-            Debug.WriteLine("PServer Init");
+
+            //BaseScript.GetStreetNameAtCoord();
+            //EventHandlers["pspray:add_spray"] += new Action<Player, string>(AddSpray);
+            //EventHandlers["pspray:remove_sprays"] += new Action<Player, string>(RemoveSpray);
+            //EventHandlers["pspray:get_sprays"] += new Action(GetSprays);
+            //PSprayDbInitialize();
+            //Debug.WriteLine("PServer Init");
+            NodesList = new();
+            EventHandlers["pspray:street_data"] += new Action<string>(WriteDataToFile);
+            EventHandlers["pspray:finish_data"] += new Action(FinishData);
+            EventHandlers["pspray:check_data"] += new Action(CheckCount);
+            //PTurfCreateMap();
+        }
+
+        private async Task PTurfCreateMap()
+        {
+            string filePath = "output.json"; // Replace with the actual file path
+            string jsonContent = File.ReadAllText(filePath);
+
+            List<StreetNode> NodesList = JsonConvert.DeserializeObject<List<StreetNode>>(jsonContent);
+            Debug.WriteLine("Data Generated to Local Memory");
+
+            Bitmap image = GenerateImage(NodesList);
+
+        }
+
+        private void CheckCount()
+        {
+            Debug.WriteLine($"Count is: {NodesList.Count}");
+        }
+
+        private async void FinishData()
+        {
+            string jsonData = JsonConvert.SerializeObject(NodesList);
+            File.WriteAllText("output5.json", jsonData);
+            Debug.WriteLine("Data pushed to Output5.json");
+            //NodesList = new();
+            //image.Save(imagePath, ImageFormat.Png);
+        }
+
+        private async void WriteDataToFile(string jsonData)
+        {
+            Debug.WriteLine("Data Received");
+            //Debug.WriteLine(jsonData);
+            List<StreetNode> Nodes = JsonConvert.DeserializeObject<List<StreetNode>>(jsonData);
+            NodesList = NodesList.Concat(Nodes).ToList();
+            Debug.WriteLine($"Current NodeList Count: {NodesList.Count}");
+        }
+
+        private Bitmap GenerateImage(List<StreetNode> rootNode)
+        {
+            Debug.WriteLine("Processing Data pt1");
+            //int width = 8800;  // Set the image width
+            //int height = 12400; // Set the image height
+
+            int width = 400;  // Set the image width
+            int height = 800; // Set the image height
+
+            Bitmap image = new(width, height);
+            Debug.WriteLine("Processing Data pt2");
+            using (Graphics graphics = Graphics.FromImage(image))
+            {
+                // Clear the image with a white background
+                graphics.Clear(Color.White);
+                foreach (StreetNode node in rootNode)
+                // Call a recursive method to draw nodes and subnodes
+                    DrawNode(graphics, node, 0, 0, width, height);
+            }
+
+
+            return image;
+        }
+
+        private void DrawNode(Graphics graphics, StreetNode node, int x, int y, int width, int height)
+        {
+            // Calculate the position based on the node's coordinates and the available space
+            int nodeX = x + node.CoordX;    // Adjust coordinates to fit within the image
+            int nodeY = y + node.CoordY;   // Adjust coordinates to fit within the image
+
+            // Parse the color from the HTML color code
+            Color color = ColorTranslator.FromHtml(node.Color);
+
+            // Draw a colored rectangle representing the node
+            using (Brush brush = new SolidBrush(color))
+            {
+                graphics.FillRectangle(brush, nodeX, nodeY, 10, 10); // Adjust the size as needed
+            }
+
+            // Recursively draw subnodes
+            //foreach (var subnode in node.Subnodes)
+            //{
+            //    DrawNode(graphics, subnode, nodeX, nodeY, width, height);
+            //}
         }
 
         private async Task PSprayDbInitialize()

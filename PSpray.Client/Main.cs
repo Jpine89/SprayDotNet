@@ -13,6 +13,12 @@
         {
             Instance = this;
             InitialiseScripts();
+            RegisterCommand("weapon", new Action(Weapon), false);
+        }
+
+        private void Weapon()
+        {
+            GiveWeaponToPed(GetPlayerPed(-1), (uint)GetHashKey("WEAPON_ASSAULTRIFLE"), 999, false, false);
         }
 
         private void InitialiseScripts()
