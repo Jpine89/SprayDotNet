@@ -6,6 +6,7 @@ namespace PSpray.Server.Utils
 {
     class Queries
     {
+        #region Tables
         public static string createPSprayTable = @"
             CREATE TABLE IF NOT EXISTS `pspray` (
                 `id` int NOT NULL AUTO_INCREMENT,
@@ -23,6 +24,12 @@ namespace PSpray.Server.Utils
                 PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
+        public static string createPTurfTable = @"
+            CREATE TABLE IF NOT EXISTS `pturf` (
+                `id` int NOT NULL AUTO_INCREMENT,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+        #endregion
 
 
         public static string getPSprayFromTable = @"

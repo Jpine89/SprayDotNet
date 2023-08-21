@@ -31,6 +31,9 @@ namespace PSpray.Server
             EventHandlers["pspray:finish_data"] += new Action(FinishData);
             EventHandlers["pspray:check_data"] += new Action(CheckCount);
             //PTurfCreateMap();
+
+
+            EventHandlers["pspray:create_turf"] += new Action<string>(CreateTurf);
         }
 
         private async Task PTurfCreateMap()
@@ -43,6 +46,11 @@ namespace PSpray.Server
 
             Bitmap image = GenerateImage(NodesList);
 
+        }
+
+        private void CreateTurf(string jsonData)
+        {
+            Debug.WriteLine("Create Turf was Called");
         }
 
         private void CheckCount()

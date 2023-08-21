@@ -37,6 +37,15 @@ namespace PSpray.Client.Scripts
         private string crossRoad;
         private string _StreetColor = "";
         private HashSet<string> usedCoords = new HashSet<string>();
+        //waypoint id
+        private const int blipWPid = 8;
+        //point of interest id
+        private const int blipPOIid = 162;
+
+        private List<Vector3> blipList = new List<Vector3>();
+        private List<int> blipListId = new List<int>();
+        private Vector3 lastSavedBlip;
+
 
 
         private int overlayHandle;
@@ -66,10 +75,6 @@ namespace PSpray.Client.Scripts
             SetupEventHandler();
             SetupRegisterCommands();
 
-            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
-            //Debug.WriteLine($"gangConfig : {serverConfigFile}");
-            nodes = JsonConvert.DeserializeObject<List<StreetNode>>(serverConfigFile);
-            //Main.Instance.AttachTick(loadGangOnMap);
 
         }
 
@@ -106,6 +111,7 @@ namespace PSpray.Client.Scripts
         private async Task KillTic()
         {
             Main.Instance.DetachTick(loadGangOnMap);
+            Main.Instance.DetachTick(loadTurfOnMap);
         }
 
         private void SetupEventHandler()
@@ -137,8 +143,79 @@ namespace PSpray.Client.Scripts
             RegisterCommand("stop", new Action(Stop), false);
             RegisterCommand("load", new Action(Load), false);
 
+            RegisterCommand("blip", new Action(Blip), false);
+            RegisterCommand("Drawblip", new Action(DrawBlip), false);
+            RegisterCommand("SendTurf", new Action(SendTurf), false);
+
         }
 
+        private async void Blip()
+        {
+            Main.Instance.AttachTick(BlipTask);
+        }
+
+        private async Task BlipTask()
+        {
+
+            var blip = GetFirstBlipInfoId(blipWPid);
+            var newPoint = GetBlipCoords(blip);
+            if(newPoint != new Vector3() { X = 0, Y = 0, Z = 0 } && newPoint != lastSavedBlip)
+            {
+                blipList.Add(newPoint);
+                lastSavedBlip = newPoint;
+                int i = AddBlipForCoord(newPoint.X, newPoint.Y, newPoint.Z);
+                blipListId.Add(i);
+            }
+
+        }
+
+        private void DrawBlip()
+        {
+            Main.Instance.AttachTick(loadTurfOnMap);
+        }
+
+
+        private async Task loadTurfOnMap()
+        {
+            overlayHandle = AddMinimapOverlay("gang_areas.gfx");
+
+            while (!HasMinimapOverlayLoaded(overlayHandle))
+            {
+                Debug.WriteLine("Waiting..Waiting...");
+                await BaseScript.Delay(50);
+            }
+
+            Debug.WriteLine($"{overlayHandle}");
+            AddGangColor("AMBIENT_GANG_BALLAS", 255, 255, 0);
+            int count = 0;
+            if(blipList.Count > 2)
+            {
+                for(int i = 0; i < blipList.Count; i++)
+                {
+                    if(i+1 == blipList.Count)
+                    {
+                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[0].X, blipList[0].Y, $"Turf{count}");
+                    }
+                    else
+                    {
+                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[i+1].X, blipList[i+1].Y, $"Turf{count}");
+                    }
+                       
+                    //Debug.WriteLine($"Cords: [{node.CoordX},{node.CoordY}] :: [{node.CoordX + 1},{node.CoordY + 1}]");
+                    SetGangAreaOwner($"Turf{count}", "AMBIENT_GANG_BALLAS");
+                    count++;
+                }
+
+                
+            }
+            KillTic();
+        }
+
+        private void SendTurf()
+        {
+            string jsonData = JsonConvert.SerializeObject(blipList, Formatting.Indented);
+            BaseScript.TriggerServerEvent("pspray:street_data", jsonData);
+        }
         private async void finish()
         {
             BaseScript.TriggerServerEvent("pspray:finish_data");
@@ -175,15 +252,21 @@ namespace PSpray.Client.Scripts
         public bool IsInside(Vector3 pos)
         {
             bool inside = false;
-            int numVertices = nodes.Count;
+            int numVertices = blipList.Count;
 
             for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
             {
-                if (((nodes[i].CoordY > pos.Y) != (nodes[j].CoordY > pos.Y)) &&
-                    (pos.X < (nodes[j].CoordX - nodes[i].CoordX) * (pos.Y - nodes[i].CoordY) / (nodes[j].CoordY - nodes[i].CoordY) + nodes[i].CoordX))
+                if (((blipList[i].Y > pos.Y) != (blipList[j].Y > pos.Y)) &&
+                    (pos.X < (blipList[j].X - blipList[i].X) * (pos.Y - blipList[i].Y) / (blipList[j].Y - blipList[i].Y) + blipList[i].X))
                 {
                     inside = !inside;
                 }
+
+                //if (((nodes[i].CoordY > pos.Y) != (nodes[j].CoordY > pos.Y)) &&
+                //    (pos.X < (nodes[j].CoordX - nodes[i].CoordX) * (pos.Y - nodes[i].CoordY) / (nodes[j].CoordY - nodes[i].CoordY) + nodes[i].CoordX))
+                //{
+                //    inside = !inside;
+                //}
             }
 
             return inside;
@@ -196,6 +279,12 @@ namespace PSpray.Client.Scripts
 
         private async void Load()
         {
+
+            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
+            //Debug.WriteLine($"gangConfig : {serverConfigFile}");
+            nodes = JsonConvert.DeserializeObject<List<StreetNode>>(serverConfigFile);
+            //Main.Instance.AttachTick(loadGangOnMap);
+
             Main.Instance.DetachTick(SmallLoop);
             Main.Instance.AttachTick(loadGangOnMap);
         }
@@ -203,6 +292,20 @@ namespace PSpray.Client.Scripts
         private async void Stop()
         {
             Main.Instance.DetachTick(SmallLoop);
+            Main.Instance.DetachTick(SendData);
+            Main.Instance.DetachTick(BlipTask);
+            Main.Instance.DetachTick(loadTurfOnMap);
+            
+            if (blipListId.Count > 0)
+            {
+                int blip;
+                for (int i = 0; i < blipListId.Count; i++)
+                {
+                    blip = blipListId[i];
+                    RemoveBlip(ref blip);
+                }
+            }
+
         }
 
         private async void StartSmall()
@@ -429,7 +532,7 @@ namespace PSpray.Client.Scripts
             //for(int c = 0; c < 3; c++)
             //{
             Debug.WriteLine($"I'm Sending, Count: {nodes.Count}");
-                int stop = nodes.Count - 3000 > 0 ? nodes.Count - 3000 : 0;
+                int stop = nodes.Count - 2000 > 0 ? nodes.Count - 2000 : 0;
                 if (nodes.Count >= 0)
                 {
                     List<StreetNode> _TempNodes = new List<StreetNode>();
@@ -437,7 +540,7 @@ namespace PSpray.Client.Scripts
                     {
                         if (i < 0)
                             continue;
-                        Debug.WriteLine($"{i}");
+                        //Debug.WriteLine($"{i}");
                         _TempNodes.Add(nodes[i]);
                         nodes.RemoveAt(i);
 
@@ -462,7 +565,7 @@ namespace PSpray.Client.Scripts
                 }
             //}
 
-            await BaseScript.Delay(5000);
+            await BaseScript.Delay(3500);
         }
 
         private string RandomColor(Random random)
