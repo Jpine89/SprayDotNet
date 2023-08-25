@@ -9,7 +9,8 @@ files {
     "client/Newtonsoft.Json.dll",
     "client/ScaleformUI.dll",
 	"gang_areas.gfx",
-	"GangTurf.json"
+	"GangTurf.json",
+	"GroveStData.json"
 }
 client_scripts {
     "client/*.net.dll",

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace PSpray.Client.Scripts
@@ -50,8 +51,13 @@ namespace PSpray.Client.Scripts
 
         private int overlayHandle;
         private bool firstTick;
+        private dynamic list;
 
-        const string CLIENT_CONFIG_LOCATION = $"GangTurf.json";
+        const string CLIENT_CONFIG_LOCATION = $"GroveStData.json";
+        HashSet<int> bins = new HashSet<int>();
+        List<FivemObj> ObjList;
+        List<TurfNode> TurfList;
+        string TurfName = "";
 
         private StreetMapHandler()
         {
@@ -72,89 +78,93 @@ namespace PSpray.Client.Scripts
 
         private async void Init()
         {
+            ObjList = new();
+            TurfList = new();
             SetupEventHandler();
             SetupRegisterCommands();
 
 
+            //bins.Add(-206690185);
+            //bins.Add(682791951);
+            //bins.Add(218085040);
+            //bins.Add(1511880420);
+            //bins.Add(666561306);
+            //bins.Add(-58485588);
+
+
+            BaseScript.TriggerServerEvent("pspray:get_dump");
+            BaseScript.TriggerServerEvent("pspray:get_turf");
         }
 
-        private async Task loadGangOnMap()
-        {
-            overlayHandle = AddMinimapOverlay("gang_areas.gfx");
 
-            while (!HasMinimapOverlayLoaded(overlayHandle))
-            {
-                Debug.WriteLine("Waiting..Waiting...");
-                await BaseScript.Delay(50);
-            }
-
-            Debug.WriteLine($"{overlayHandle}");
-            AddGangColor("AMBIENT_GANG_BALLAS", 255, 255, 0);
-            int count = 0;
-            foreach (var node in nodes)
-            {
-                CustomAddGangArea(node.CoordX, node.CoordY, node.CoordX + 1, node.CoordY + 1, $"Test{count}");
-                Debug.WriteLine($"Cords: [{node.CoordX},{node.CoordY}] :: [{node.CoordX + 1},{node.CoordY + 1}]");
-                SetGangAreaOwner($"Test{count}", "AMBIENT_GANG_BALLAS");
-                count++;
-            }
-
-            //CustomAddGangArea(0, 0, 100, 100, $"Test{count}");
-            //SetGangAreaOwner($"Test{count}", "AMBIENT_GANG_BALLAS");
-
-            //"AMBIENT_GANG_MEXICAN", Color.FromArgb(255, 255, 255, 0)
-            Debug.WriteLine($"done; count {count}");
-
-            KillTic();
-        }
 
         private async Task KillTic()
         {
+            
             Main.Instance.DetachTick(loadGangOnMap);
             Main.Instance.DetachTick(loadTurfOnMap);
+            Main.Instance.DetachTick(IsPlayNearObject);
         }
 
         private void SetupEventHandler()
         {
-
+            Main.Instance.EventHandlerDictionary.Add("pspray:List_Dump", new Action<string>(ListDump));
+            Main.Instance.EventHandlerDictionary.Add("pspray:List_Turf", new Action<string>(GetTurfs));
         }
 
 
         private void SetupRegisterCommands()
         {
-            RegisterCommand("streets1", new Action(mycords1), false);
-            RegisterCommand("streets2", new Action(mycords2), false);
-            RegisterCommand("streets3", new Action(mycords3), false);
-            RegisterCommand("streets4", new Action(mycords4), false);
-            RegisterCommand("streets5", new Action(mycords5), false);
-            RegisterCommand("streets6", new Action(mycords6), false);
-
-            RegisterCommand("streets7", new Action(mycords7), false);
-            RegisterCommand("streets8", new Action(mycords8), false);
-            RegisterCommand("streets9", new Action(mycords9), false);
-            //RegisterCommand("streets10", new Action(mycords10), false);
             RegisterCommand("finish", new Action(finish), false);
             RegisterCommand("count", new Action(count), false);
-            RegisterCommand("pos", new Action(pos), false);
-            RegisterCommand("fake", new Action(fake), false);
-            RegisterCommand("start", new Action(Start), false);
-            RegisterCommand("small", new Action(StartSmall), false);
-            RegisterCommand("send", new Action(Send), false);
             RegisterCommand("stop", new Action(Stop), false);
             RegisterCommand("load", new Action(Load), false);
 
-            RegisterCommand("blip", new Action(Blip), false);
+
+            RegisterCommand("NewTurf", new Action<int, List<object>, string>((source, args, raw) =>
+            {
+                if (args.ToList().Count() > 0)
+                {
+                    string name = "";
+                    foreach(var item in args)
+                    {
+                        name = $"{name} {item}";
+                    }
+                    //Debug.WriteLine($"{name}");
+                    NewTurf(name.Trim());
+                }
+            }), false);
+
+
             RegisterCommand("Drawblip", new Action(DrawBlip), false);
-            RegisterCommand("SendTurf", new Action(SendTurf), false);
+            RegisterCommand("AddTurf", new Action(AddTurf), false);
 
+            //GetGamePool
+            RegisterCommand("FindObj", new Action(FindObj), false);
         }
-
-        private async void Blip()
+        private void FindObj()
         {
-            Main.Instance.AttachTick(BlipTask);
+            Debug.WriteLine("Starting");
+            Main.Instance.AttachTick(IsPlayNearObject);
         }
 
-        private async Task BlipTask()
+        private async void ListDump(string data)
+        {
+            ObjList = JsonConvert.DeserializeObject<List<FivemObj>>(data);
+            //foreach(var obj in ObjList)
+            //{
+            //    AddBlipForCoord(obj.Position.X, obj.Position.Y, obj.Position.Z);
+            //}
+        }
+
+
+        private async void NewTurf(string turfName)
+        {
+            TurfName = turfName;
+            Main.Instance.AttachTick(TurfTask);
+        }
+
+        private async Task TurfTask()
         {
 
             var blip = GetFirstBlipInfoId(blipWPid);
@@ -175,68 +185,72 @@ namespace PSpray.Client.Scripts
         }
 
 
-        private async Task loadTurfOnMap()
+        private void AddTurf()
         {
-            overlayHandle = AddMinimapOverlay("gang_areas.gfx");
+            TurfNode newTurf = new();
+            newTurf.Name = TurfName;
+            newTurf.NodeList = blipList;
+            string jsonData = JsonConvert.SerializeObject(newTurf, Formatting.Indented);
+            BaseScript.TriggerServerEvent("pspray:add_turf", jsonData);
+            TurfName = ""; blipList.Clear();
+            Main.Instance.DetachTick(TurfTask);
+        }
 
-            while (!HasMinimapOverlayLoaded(overlayHandle))
+        private void GetTurfs(string data)
+        {
+            TurfList = JsonConvert.DeserializeObject<List<TurfNode>>(data);
+            foreach(var node in TurfList)
             {
-                Debug.WriteLine("Waiting..Waiting...");
-                await BaseScript.Delay(50);
-            }
-
-            Debug.WriteLine($"{overlayHandle}");
-            AddGangColor("AMBIENT_GANG_BALLAS", 255, 255, 0);
-            int count = 0;
-            if(blipList.Count > 2)
-            {
-                for(int i = 0; i < blipList.Count; i++)
+                foreach(var pos in node.NodeList)
                 {
-                    if(i+1 == blipList.Count)
-                    {
-                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[0].X, blipList[0].Y, $"Turf{count}");
-                    }
-                    else
-                    {
-                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[i+1].X, blipList[i+1].Y, $"Turf{count}");
-                    }
-                       
-                    //Debug.WriteLine($"Cords: [{node.CoordX},{node.CoordY}] :: [{node.CoordX + 1},{node.CoordY + 1}]");
-                    SetGangAreaOwner($"Turf{count}", "AMBIENT_GANG_BALLAS");
-                    count++;
+                    AddBlipForCoord(pos.X, pos.Y, pos.Z);
                 }
-
-                
             }
-            KillTic();
         }
 
-        private void SendTurf()
+
+        private async Task IsPlayNearObject()
         {
-            string jsonData = JsonConvert.SerializeObject(blipList, Formatting.Indented);
-            BaseScript.TriggerServerEvent("pspray:street_data", jsonData);
+            if (IsInside(Game.PlayerPed.Position))
+            {
+                foreach (var obj in ObjList)
+                {
+                    if (IsInside(obj.Position))
+                    {
+                        //Entity entity = GetClosestObjectOfType(pedCoord.X, pedCoord.Y, pedCoord.Z, 5.0f, (uint)b, false, false, false);
+                        //AddBlipForCoord(_entity.);
+                        int i = AddBlipForCoord(obj.Position.X, obj.Position.Y, obj.Position.Z);
+                        SetBlipColour(i, 43);
+                    }
+                }
+            }
+
+            await BaseScript.Delay(2000);
         }
+
+        public bool IsInside(Vector3 pos)
+        {
+            bool inside = false;
+            foreach (var node in TurfList)
+            {
+                int numVertices = node.NodeList.Count;
+                for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
+                {
+                    if (((node.NodeList[i].Y > pos.Y) != (node.NodeList[j].Y > pos.Y)) &&
+                        (pos.X < (node.NodeList[j].X - node.NodeList[i].X) * (pos.Y - node.NodeList[i].Y) / (node.NodeList[j].Y - node.NodeList[i].Y) + node.NodeList[i].X))
+                    {
+                        inside = !inside;
+                    }
+                }
+            }
+            return inside;
+        }
+
+        #region Proof Of Concept Ideas
         private async void finish()
         {
             BaseScript.TriggerServerEvent("pspray:finish_data");
         }
-
-
-        private async void count()
-        {
-            BaseScript.TriggerServerEvent("pspray:check_data");
-        }
-
-        private async void fake()
-        {
-            uint streetNameUINT = 0;
-            uint crossRoadUINT = 0;
-            Vector3 pos = GetEntityCoords(PlayerPedId(), true);
-            GetStreetNameAtCoord(2500, 1530, 0, ref streetNameUINT, ref crossRoadUINT);
-            Debug.WriteLine($"Player POS: {pos.X}, {pos.Y}, Street: {GetStreetNameFromHashKey(streetNameUINT)}");
-            Debug.WriteLine($"Secondary: {GetStreetNameFromHashKey(crossRoadUINT)}");
-        }
-
         private async void pos()
         {
             uint streetNameUINT = 0;
@@ -248,28 +262,18 @@ namespace PSpray.Client.Scripts
             Debug.WriteLine($"Node Count: {nodes.Count}");
             Debug.WriteLine($"Are We Inside?: {IsInside(pos)}");
         }
-
-        public bool IsInside(Vector3 pos)
+        private async void fake()
         {
-            bool inside = false;
-            int numVertices = blipList.Count;
-
-            for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
-            {
-                if (((blipList[i].Y > pos.Y) != (blipList[j].Y > pos.Y)) &&
-                    (pos.X < (blipList[j].X - blipList[i].X) * (pos.Y - blipList[i].Y) / (blipList[j].Y - blipList[i].Y) + blipList[i].X))
-                {
-                    inside = !inside;
-                }
-
-                //if (((nodes[i].CoordY > pos.Y) != (nodes[j].CoordY > pos.Y)) &&
-                //    (pos.X < (nodes[j].CoordX - nodes[i].CoordX) * (pos.Y - nodes[i].CoordY) / (nodes[j].CoordY - nodes[i].CoordY) + nodes[i].CoordX))
-                //{
-                //    inside = !inside;
-                //}
-            }
-
-            return inside;
+            uint streetNameUINT = 0;
+            uint crossRoadUINT = 0;
+            Vector3 pos = GetEntityCoords(PlayerPedId(), true);
+            GetStreetNameAtCoord(2500, 1530, 0, ref streetNameUINT, ref crossRoadUINT);
+            Debug.WriteLine($"Player POS: {pos.X}, {pos.Y}, Street: {GetStreetNameFromHashKey(streetNameUINT)}");
+            Debug.WriteLine($"Secondary: {GetStreetNameFromHashKey(crossRoadUINT)}");
+        }
+        private async void count()
+        {
+            BaseScript.TriggerServerEvent("pspray:check_data");
         }
 
         private async void Send()
@@ -285,15 +289,22 @@ namespace PSpray.Client.Scripts
             nodes = JsonConvert.DeserializeObject<List<StreetNode>>(serverConfigFile);
             //Main.Instance.AttachTick(loadGangOnMap);
 
-            Main.Instance.DetachTick(SmallLoop);
-            Main.Instance.AttachTick(loadGangOnMap);
+
+            foreach(var node in nodes)
+            {
+                int i = AddBlipForCoord(node.CoordX, node.CoordY, 0f);
+                SetBlipColour(i, 27);
+            }
+
+            //Main.Instance.DetachTick(SmallLoop);
+            //Main.Instance.AttachTick(loadGangOnMap);
         }
 
         private async void Stop()
         {
             Main.Instance.DetachTick(SmallLoop);
             Main.Instance.DetachTick(SendData);
-            Main.Instance.DetachTick(BlipTask);
+            Main.Instance.DetachTick(TurfTask);
             Main.Instance.DetachTick(loadTurfOnMap);
             
             if (blipListId.Count > 0)
@@ -609,47 +620,71 @@ namespace PSpray.Client.Scripts
             PushScaleformMovieFunctionParameterInt(b);
             PopScaleformMovieFunctionVoid();
         }
+        private async Task loadGangOnMap()
+        {
+            overlayHandle = AddMinimapOverlay("gang_areas.gfx");
+
+            while (!HasMinimapOverlayLoaded(overlayHandle))
+            {
+                Debug.WriteLine("Waiting..Waiting...");
+                await BaseScript.Delay(50);
+            }
+
+            Debug.WriteLine($"{overlayHandle}");
+            AddGangColor("AMBIENT_GANG_BALLAS", 255, 255, 0);
+            int count = 0;
+            foreach (var node in nodes)
+            {
+                CustomAddGangArea(node.CoordX, node.CoordY, node.CoordX + 1, node.CoordY + 1, $"Test{count}");
+                Debug.WriteLine($"Cords: [{node.CoordX},{node.CoordY}] :: [{node.CoordX + 1},{node.CoordY + 1}]");
+                SetGangAreaOwner($"Test{count}", "AMBIENT_GANG_BALLAS");
+                count++;
+            }
+
+            //CustomAddGangArea(0, 0, 100, 100, $"Test{count}");
+            //SetGangAreaOwner($"Test{count}", "AMBIENT_GANG_BALLAS");
+
+            //"AMBIENT_GANG_MEXICAN", Color.FromArgb(255, 255, 255, 0)
+            Debug.WriteLine($"done; count {count}");
+
+            KillTic();
+        }
+
+        private async Task loadTurfOnMap()
+        {
+            overlayHandle = AddMinimapOverlay("gang_areas.gfx");
+
+            while (!HasMinimapOverlayLoaded(overlayHandle))
+            {
+                Debug.WriteLine("Waiting..Waiting...");
+                await BaseScript.Delay(50);
+            }
+
+            Debug.WriteLine($"{overlayHandle}");
+            AddGangColor("AMBIENT_GANG_BALLAS", 255, 255, 0);
+            int count = 0;
+            if (blipList.Count > 2)
+            {
+                for (int i = 0; i < blipList.Count; i++)
+                {
+                    if (i + 1 == blipList.Count)
+                    {
+                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[0].X, blipList[0].Y, $"Turf{count}");
+                    }
+                    else
+                    {
+                        CustomAddGangArea(blipList[i].X, blipList[i].Y, blipList[i + 1].X, blipList[i + 1].Y, $"Turf{count}");
+                    }
+
+                    //Debug.WriteLine($"Cords: [{node.CoordX},{node.CoordY}] :: [{node.CoordX + 1},{node.CoordY + 1}]");
+                    SetGangAreaOwner($"Turf{count}", "AMBIENT_GANG_BALLAS");
+                    count++;
+                }
 
 
-        private async void mycords1()
-        {
-            await CreateNodeMap(-4400, -3000);
+            }
+            KillTic();
         }
-        private async void mycords2()
-        {
-            await CreateNodeMap(-3000, -1500);
-        }
-        private async void mycords3()
-        {
-            await CreateNodeMap(-1500, 0000);
-        }
-        private async void mycords4()
-        {
-            await CreateNodeMap(0000, 1500);
-        }
-        private async void mycords5()
-        {
-            await CreateNodeMap(1500, 3000);
-        }
-        private async void mycords6()
-        {
-            await CreateNodeMap(3000, 4500);
-        }
-        private async void mycords7()
-        {
-            await CreateNodeMap(4500, 6000);
-        }
-        private async void mycords8()
-        {
-            await CreateNodeMap(6000, 7500);
-        }
-        private async void mycords9()
-        {
-            await CreateNodeMap(7500, 8100);
-        }
-        //private async void mycords10()
-        //{
-        //    await CreateNodeMap(-4400, -2000);
-        //}
+        #endregion
     }
 }
