@@ -30,6 +30,7 @@
 		<PackageReference Include="Dapper" Version="2.0.143" PrivateAssets="all" />
 		<PackageReference Include="MySqlConnector" Version="2.2.6" />
 		<PackageReference Include="Newtonsoft.Json" Version="12.0.2" ExcludeAssets="Compile" GeneratePathProperty="true" />
+		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(PkgNewtonsoft_Json)\lib\portable-net40+sl5+win8+wp8+wpa81\Newtonsoft.Json.dll</HintPath>
 		</Reference>

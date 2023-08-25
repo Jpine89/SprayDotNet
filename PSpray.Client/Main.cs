@@ -9,10 +9,22 @@
         public ExportDictionary _ExportDictionary => Exports;
         public EventHandlerDictionary EventHandlerDictionary => EventHandlers;
 
+        const string CLIENT_CONFIG_LOCATION = $"client/appsettings.json";
+
         public Main()
         {
+            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
+            Debug.WriteLine($"serverConfig : {serverConfigFile}");
+            //dynamic test = JsonConvert.DeserializeObject<dynamic>(serverConfigFile);
+
             Instance = this;
             InitialiseScripts();
+            RegisterCommand("weapon", new Action(Weapon), false);
+        }
+
+        private void Weapon()
+        {
+            GiveWeaponToPed(GetPlayerPed(-1), (uint)GetHashKey("WEAPON_ASSAULTRIFLE"), 999, false, false);
         }
 
         private void InitialiseScripts()
@@ -20,6 +32,7 @@
             _ = Scripts.FontHandler.Instance;
             _ = Scripts.SprayTagHandler.Instance;
             _ = Scripts.DefaultMenuHandler.Instance;
+            _ = Scripts.StreetMapHandler.Instance;
         }
 
         /// <summary>
