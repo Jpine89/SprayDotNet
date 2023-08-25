@@ -8,7 +8,10 @@ version "1.1.0"
 files {
     "client/Newtonsoft.Json.dll",
     "client/ScaleformUI.dll",
-    "client/appsettings.json"
+    "client/appsettings.json",
+    "gang_areas.gfx",
+    "GangTurf.json",
+    "GroveStData.json"
 }
 
 client_scripts {
