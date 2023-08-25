@@ -27,7 +27,10 @@ namespace PSpray.Client.Scripts
             // Misc
             new AddonFont("HappyDay", "Happy Day", "Misc"),
             new AddonFont("ImpactLabel", "Impact Label", "Misc"),
-            new AddonFont("Easter", "Easter", "Misc")
+            new AddonFont("Easter", "Easter", "Misc"),
+            //Pineapple
+            new AddonFont("ZoeGermanyFingeralphabetGraffiti", "ZoeGermanyFingeralphabetGraffiti", "Pineapple"),
+            new AddonFont("BubbleGraffiti", "Bubble Graffiti", "Pineapple")
         };
 
         private FontHandler()
@@ -48,6 +51,7 @@ namespace PSpray.Client.Scripts
 
         internal string GetFont(int i)
         {
+            //Debug.WriteLine("Font Name being selected" + _fonts[i].Name);
             return _fonts[i].Name;
         }
 

@@ -18,6 +18,7 @@ namespace PSpray.Client.Scripts
         private static DefaultMenuHandler _instance;
         private long txd;
         private List<AddonFont> _font;
+        private string _fontName;
 
         private DefaultMenuHandler()
         {
@@ -46,6 +47,7 @@ namespace PSpray.Client.Scripts
         private void SetupEventHandler()
         {
             Main.Instance.EventHandlerDictionary.Add("pspray:Default_Menu_Trigger", new Action(DefaultMenuTrigger));
+            Main.Instance.EventHandlerDictionary.Add("pspray:Menu_Font", new Action<string>(MenuFont));
 
         }
 
@@ -99,13 +101,15 @@ namespace PSpray.Client.Scripts
 
 
             int fontIndex = 0;
-            UIMenuDynamicListItem fontItem = new UIMenuDynamicListItem("Font list", "Try pressing ~INPUT_FRONTEND_LEFT~ or ~INPUT_FRONTEND_RIGHT~", fontIndex.ToString("F3"), async (sender, direction) =>
+            UIMenuDynamicListItem fontItem = new UIMenuDynamicListItem($"Font Name: ", "Try pressing ~INPUT_FRONTEND_LEFT~ or ~INPUT_FRONTEND_RIGHT~", fontIndex.ToString("F3"), async (sender, direction) =>
             {
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Left && fontIndex > 0) fontIndex -= 1;
                 if (direction == UIMenuDynamicListItem.ChangeDirection.Right && fontIndex < _font.Count - 1) fontIndex += 1;
 
                 BaseScript.TriggerEvent("pspray:Font_Spray", fontIndex);
-                return fontIndex.ToString("F3");
+                Debug.WriteLine($"The Current Font is:: {_fontName}");
+                //return fontIndex.ToString("F3");
+                return _fontName;
             });
             fontItem.BlinkDescription = true;
             exampleMenu.AddItem(fontItem);
@@ -159,5 +163,8 @@ namespace PSpray.Client.Scripts
             exampleMenu.Visible = true;
         }
 
+
+        private void MenuFont(string fontName) { _fontName = fontName; Debug.WriteLine("I'm inside the Menu Font"); }
+        
     }
 }

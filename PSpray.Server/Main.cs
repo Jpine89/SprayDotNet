@@ -20,7 +20,6 @@ namespace PSpray.Server
         List<FivemObj> ObjList;
         public Main()
         {
-
             _ = PSprayDbInitialize();
             _ = PTurfDbInitialize();
 
