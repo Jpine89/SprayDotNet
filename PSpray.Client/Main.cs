@@ -9,8 +9,14 @@
         public ExportDictionary _ExportDictionary => Exports;
         public EventHandlerDictionary EventHandlerDictionary => EventHandlers;
 
+        const string CLIENT_CONFIG_LOCATION = $"client/appsettings.json";
+
         public Main()
         {
+            string serverConfigFile = LoadResourceFile(GetCurrentResourceName(), CLIENT_CONFIG_LOCATION);
+            Debug.WriteLine($"serverConfig : {serverConfigFile}");
+            //dynamic test = JsonConvert.DeserializeObject<dynamic>(serverConfigFile);
+
             Instance = this;
             InitialiseScripts();
             RegisterCommand("weapon", new Action(Weapon), false);
