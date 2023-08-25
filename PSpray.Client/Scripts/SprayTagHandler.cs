@@ -171,6 +171,7 @@ namespace PSpray.Client.Scripts
             // foreach spray in range, draw it
             for (int i = 0; i < _spraysInRange.Count; i++)
             {
+                //Debug.WriteLine($"{i}");
                 SprayTag spray = _spraysInRange[i];
                 spray.Scaleform = _scaleforms[i];
                 spray.Draw();
@@ -224,7 +225,7 @@ namespace PSpray.Client.Scripts
             }
         }
 
-        private void CreateSpray(string sprayTag)
+        public void CreateSpray(string sprayTag, bool isTurfSpray = false, SprayTag turfSpray = null)
         {
             //Debug.WriteLine("Inside Spray");
             // Create the temporary spray
@@ -233,7 +234,7 @@ namespace PSpray.Client.Scripts
                 _tempSpray = new SprayTag();
             }
 
-            Debug.WriteLine("Temp Spray initialized");
+            //Debug.WriteLine("Temp Spray initialized");
 
             // Set the spray initial information (font, color, text)
             _tempSpray.Text = sprayTag;
@@ -241,7 +242,7 @@ namespace PSpray.Client.Scripts
             _tempSpray.Color = $"#{Main.Random.Next(0x1000000):X6}"; // Random color
 
 
-            Debug.WriteLine("Temp Spray has basic setup");
+            //Debug.WriteLine("Temp Spray has basic setup");
             // Set the spray scaleform to the private spray scaleform
             _tempSpray.Scaleform = _scaleforms[PRIVATE_SPRAY_SCALEFORM_KEY];
 
@@ -251,12 +252,48 @@ namespace PSpray.Client.Scripts
 
             // Create the camera
             _camera = CreateCam("DEFAULT_SCRIPTED_CAMERA", false);
-            Debug.WriteLine("Camerea Created");
+            //Debug.WriteLine("Camerea Created");
+
+            if (isTurfSpray)
+            {
+                //Debug.WriteLine("Inside If");
+                _tempSpray.Location = turfSpray.Location;
+                _tempSpray.Rotation = turfSpray.Rotation;
+                // draw the spray
+                //Debug.WriteLine("About to draw");
+                //_tempSpray.Draw();
+
+                //string changeValue = JsonConvert.SerializeObject(_tempSpray);
+                //BaseScript.TriggerServerEvent("pspray:add_spray", changeValue);
+
+                // Reset the temp spray
+                //_tempSpray = null;
+                SaveSpray();
+                //Main.Instance.AttachTick(TurfTempSprayAsync);
+            }
+            else
+            {
+                // Start the tick event
+                Main.Instance.AttachTick(SetSprayPositionAsync);
+            }
 
 
-            // Start the tick event
-            Main.Instance.AttachTick(SetSprayPositionAsync);
         }
+
+        private async Task TurfTempSprayAsync()
+        {
+            // draw the spray
+            //_tempSpray.Draw();
+            _spraysInRange.Add(_tempSpray);
+            if (Game.IsControlJustPressed(0, Control.Aim))
+            {
+                
+                _spraysInRange.Clear();
+                _tempSpray = null;
+            }
+            Main.Instance.DetachTick(TurfTempSprayAsync);
+        }
+
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         private async Task SetSprayPositionAsync()
@@ -305,8 +342,8 @@ namespace PSpray.Client.Scripts
         private void ListSpray(string listSpray){ 
             /*Debug.WriteLine(listSpray);*/ 
             _sprays = JsonConvert.DeserializeObject<List<SprayTag>>(listSpray); 
-            SpraysInRangeAsync(true); }
-
+            SpraysInRangeAsync(true); 
+        }
         private void SprayText(string newText) => _tempSpray.Text = newText;
         private void SprayFont(int newFont) { _tempSpray.Font = FontHandler.Instance.GetFont(newFont);  if (UseDefaultMenu) BaseScript.TriggerEvent("pspray:Menu_Font", _tempSpray.Font); }
         
@@ -385,7 +422,7 @@ namespace PSpray.Client.Scripts
             }
         }
 
-        private static Vector3 RotationToDirection(Vector3 rotation)
+        public Vector3 RotationToDirection(Vector3 rotation)
         {
             float pi = (float)Math.PI / 180f;
             float retZ = rotation.Z * pi;

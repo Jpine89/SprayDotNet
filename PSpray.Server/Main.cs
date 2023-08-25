@@ -1,4 +1,5 @@
 ﻿using CitizenFX.Core;
+using static CitizenFX.Core.Native.API;
 using Dapper;
 using PSpray.Server.Utils;
 using System;
